@@ -104,7 +104,7 @@ export default function Home() {
                 style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
               >
                 A BeSmart é uma agência de social media que virou referência em processo e tecnologia.
-                Gerenciamos 36 clientes — e desenvolvemos as ferramentas que nos permitiram crescer
+                Gerenciamos 36 clientes e desenvolvemos as ferramentas que nos permitiram crescer
                 sem travar. Hoje, essas ferramentas estão disponíveis para outras agências.
               </p>
             </AnimatedSection>
@@ -185,7 +185,7 @@ export default function Home() {
                   A BeSmart nasceu em 2018 com uma missão simples: fazer marketing digital com processo,
                   propósito e criatividade de verdade. Com o tempo, gerenciando dezenas de clientes
                   simultaneamente, percebemos que as ferramentas do mercado não davam conta da nossa
-                  operação — então construímos as nossas.
+                  operação. Então construímos as nossas.
                 </p>
                 <p
                   className="leading-relaxed mb-4"
@@ -194,7 +194,7 @@ export default function Home() {
                   Hoje somos uma agência especializada em gestão de redes sociais{" "}
                   <strong style={{ color: "#D1D5DB" }}>e</strong> uma empresa de tecnologia para o mercado
                   de agências. Tudo que oferecemos foi testado, refinado e validado dentro da nossa própria
-                  operação — com clientes reais, desafios reais e resultados reais.
+                  operação, com clientes reais, desafios reais e resultados reais.
                 </p>
                 <p
                   className="font-semibold"
@@ -259,7 +259,7 @@ export default function Home() {
             </AnimatedSection>
             <AnimatedSection delay={100}>
               <p className="text-lg" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
-                Cada cliente novo não traz só receita — traz mais aprovações no WhatsApp, mais planilhas,
+                Cada cliente novo não traz só receita: traz mais aprovações no WhatsApp, mais planilhas,
                 mais retrabalho. O modelo manual tem um teto. Nós chegamos nesse teto. E decidimos quebrar ele.
               </p>
             </AnimatedSection>
@@ -304,7 +304,7 @@ export default function Home() {
                   fontStyle: "italic",
                 }}
               >
-                Não inventamos esses problemas. Nós os vivemos — e construímos as soluções.
+                Não inventamos esses problemas. Nós os vivemos e construímos as soluções.
               </p>
             </div>
           </AnimatedSection>
@@ -354,7 +354,7 @@ export default function Home() {
                   style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
                 >
                   Cuidamos da sua presença digital do início ao fim. Estratégia, criação, aprovação e
-                  análise — tudo com processo e consistência, todo mês.
+                  análise, tudo com processo e consistência, todo mês.
                 </p>
                 <a href={WA_LINK} className="btn-whatsapp self-start">
                   <WhatsAppIcon />
@@ -412,7 +412,7 @@ export default function Home() {
                 >
                   Sua marca{" "}
                   <span className="gradient-text italic">presente, consistente</span>{" "}
-                  e gerando resultado — todo mês.
+                  e gerando resultado todo mês.
                 </h2>
               </AnimatedSection>
 
@@ -490,7 +490,7 @@ export default function Home() {
             </AnimatedSection>
             <AnimatedSection delay={100}>
               <p className="text-base" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
-                Construídas por quem gerenciou 36 clientes de social media por 6 anos. Não são promessas —
+                Construídas por quem gerenciou 36 clientes de social media por 6 anos. Não são promessas:
                 são as mesmas ferramentas que usamos todo dia para manter nossa operação funcionando sem
                 depender de nós no operacional.
               </p>
@@ -516,7 +516,7 @@ export default function Home() {
                       style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
                     >
                       O OrbitAI nasceu porque nenhuma ferramenta do mercado resolvia tudo que uma
-                      agência de social media precisa. Então construímos do zero — integrando IA para
+                      agência de social media precisa. Então construímos do zero, integrando IA para
                       geração de conteúdo, portal de aprovação para clientes, kanban para a equipe e
                       controle financeiro em um só lugar.
                     </p>
@@ -532,7 +532,7 @@ export default function Home() {
                   <div className="flex flex-col gap-3">
                     {[
                       "Planejamentos editoriais gerados por IA em segundos",
-                      "Portal de aprovação para o cliente — só um link, sem login",
+                      "Portal de aprovação para o cliente, só um link, sem login",
                       "Kanban da equipe com notificações automáticas",
                       "Controle financeiro com alertas de inadimplência",
                       "Onboarding de novos clientes em menos de 5 minutos",
@@ -605,7 +605,7 @@ export default function Home() {
                   >
                     Seu atendimento funcionando{" "}
                     <span className="gradient-text">24h</span>{" "}
-                    — mesmo quando você não está disponível.
+                    mesmo quando você não está disponível.
                   </h3>
                   <p
                     className="leading-relaxed mb-6"
@@ -676,7 +676,7 @@ export default function Home() {
                   style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
                 >
                   Cada funcionalidade do OrbitAI, cada fluxo do ProspectAI, cada resposta do Agente
-                  de IA foi pensada, testada e ajustada dentro da nossa própria operação — com clientes
+                  de IA foi pensada, testada e ajustada dentro da nossa própria operação, com clientes
                   reais, pressão real e resultado real.
                 </p>
                 <p
@@ -800,7 +800,7 @@ export default function Home() {
               style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}
             >
               Seja para contratar a gestão das suas redes sociais ou para conhecer as ferramentas que
-              vão transformar a sua agência — a conversa começa aqui. Sem compromisso, sem enrolação.
+              vão transformar a sua agência. A conversa começa aqui. Sem compromisso, sem enrolação.
             </p>
           </AnimatedSection>
 
