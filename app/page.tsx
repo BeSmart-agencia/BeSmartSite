@@ -4,6 +4,7 @@ import MobileMenu from "./components/MobileMenu";
 
 const WA_LINK = "https://wa.me/555121438299";
 const ORBIT_LINK = "https://www.orbitaibesmart.com.br/";
+const PROSPECT_LINK = "https://prospectai-kohl.vercel.app/";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -55,7 +56,6 @@ export default function Home() {
             />
           </a>
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#sobre" className="nav-link">Sobre nós</a>
             <a href="#gestao" className="nav-link">Gestão de Redes</a>
             <a href="#produtos" className="nav-link">Produtos</a>
             <a href="#contato" className="nav-link">Contato</a>
@@ -148,248 +148,6 @@ export default function Home() {
               ))}
             </div>
           </AnimatedSection>
-        </div>
-      </section>
-
-      <hr className="brand" />
-
-      {/* ── SOBRE NÓS ─────────────────────────────────────────────────────── */}
-      <section
-        id="sobre"
-        className="py-16 md:py-28 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0A0A0A 0%, #0D0A14 100%)" }}
-      >
-        <div
-          className="orb w-[400px] h-[400px] top-[10%] right-[-100px]"
-          style={{ background: "rgba(155, 107, 181, 0.07)" }}
-        />
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <AnimatedSection>
-                <span className="section-label">Sobre nós</span>
-                <h2
-                  className="text-3xl md:text-5xl font-bold mt-3 mb-6"
-                  style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                >
-                  Não vendemos o que{" "}
-                  <span className="gradient-text italic">nunca testamos.</span>
-                </h2>
-              </AnimatedSection>
-
-              <AnimatedSection delay={100}>
-                <p
-                  className="leading-relaxed mb-4"
-                  style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  A BeSmart nasceu em 2018 com uma missão simples: fazer marketing digital com processo,
-                  propósito e criatividade de verdade. Com o tempo, gerenciando dezenas de clientes
-                  simultaneamente, percebemos que as ferramentas do mercado não davam conta da nossa
-                  operação. Então construímos as nossas.
-                </p>
-                <p
-                  className="leading-relaxed mb-4"
-                  style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  Hoje somos uma agência especializada em gestão de redes sociais{" "}
-                  <strong style={{ color: "#D1D5DB" }}>e</strong> uma empresa de tecnologia para o mercado
-                  de agências. Tudo que oferecemos foi testado, refinado e validado dentro da nossa própria
-                  operação, com clientes reais, desafios reais e resultados reais.
-                </p>
-                <p
-                  className="font-semibold"
-                  style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  Se funciona para nós, vai funcionar para você.
-                </p>
-              </AnimatedSection>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { num: "36+", label: "Clientes ativos gerenciados todo mês", accent: "#9B6BB5" },
-                { num: "6+", label: "Anos operando e otimizando o processo", accent: "#2E9BAF" },
-                { num: "3", label: "Ferramentas desenvolvidas internamente", accent: "#9B6BB5" },
-                { num: "100%", label: "Das soluções testadas na nossa própria agência", accent: "#2E9BAF" },
-              ].map(({ num, label, accent }, i) => (
-                <AnimatedSection key={label} delay={((i + 1) * 100) as 100 | 200 | 300 | 400}>
-                  <div
-                    className="glass rounded-2xl p-6 h-full"
-                    style={{ borderColor: `${accent}33` }}
-                  >
-                    <div
-                      className="text-4xl font-bold mb-2"
-                      style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: accent }}
-                    >
-                      {num}
-                    </div>
-                    <div
-                      className="text-sm leading-snug"
-                      style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}
-                    >
-                      {label}
-                    </div>
-                  </div>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <hr className="brand" />
-
-      {/* ── O PROBLEMA ────────────────────────────────────────────────────── */}
-      <section className="py-16 md:py-28 relative overflow-hidden" style={{ background: "#0A0A0A" }}>
-        <div
-          className="orb w-[500px] h-[500px] bottom-0 left-[-150px]"
-          style={{ background: "rgba(46, 155, 175, 0.06)" }}
-        />
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <AnimatedSection>
-              <span className="section-label">O Problema</span>
-              <h2
-                className="text-3xl md:text-5xl font-bold mt-3 mb-4"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-              >
-                Agência crescendo.{" "}
-                <span className="gradient-text italic">Você soterrado na operação.</span>
-              </h2>
-            </AnimatedSection>
-            <AnimatedSection delay={100}>
-              <p className="text-lg" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
-                Cada cliente novo não traz só receita: traz mais aprovações no WhatsApp, mais planilhas,
-                mais retrabalho. O modelo manual tem um teto. Nós chegamos nesse teto. E decidimos quebrar ele.
-              </p>
-            </AnimatedSection>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-            {[
-              { emoji: "📅", title: "Planejamentos que tomam dias", desc: "Criar conteúdo do zero para dezenas de clientes todo mês é inviável sem um sistema." },
-              { emoji: "📱", title: "Aprovações perdidas no WhatsApp", desc: "Mensagem que some, cliente que não responde, post que sai sem aprovação." },
-              { emoji: "🔁", title: "Retrabalho constante da equipe", desc: "Sem visibilidade de quem está fazendo o quê, tudo vira urgência de última hora." },
-              { emoji: "🤖", title: "Leads respondidos horas depois", desc: "Enquanto você estava em reunião, o lead foi falar com outra agência." },
-              { emoji: "⏱️", title: "Onboarding manual e demorado", desc: "Cada cliente novo exige horas de briefing, criação de doc, configuração de ferramentas." },
-              { emoji: "📊", title: "Financeiro na cabeça ou na planilha", desc: "Mensalidades vencidas, inadimplência descoberta tarde demais." },
-            ].map(({ emoji, title, desc }, i) => (
-              <AnimatedSection key={title} delay={((i % 3) * 100) as 0 | 100 | 200}>
-                <div className="glass rounded-2xl p-6 h-full hover:border-white/15 transition-all duration-300">
-                  <div className="text-3xl mb-4">{emoji}</div>
-                  <h3
-                    className="text-base font-semibold mb-2"
-                    style={{ fontFamily: "var(--font-inter), sans-serif", color: "#FFFFFF" }}
-                  >
-                    {title}
-                  </h3>
-                  <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}
-                  >
-                    {desc}
-                  </p>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
-
-          <AnimatedSection delay={200}>
-            <div className="text-center">
-              <p
-                className="text-lg font-semibold"
-                style={{
-                  fontFamily: "var(--font-playfair), Georgia, serif",
-                  color: "#9B6BB5",
-                  fontStyle: "italic",
-                }}
-              >
-                Não inventamos esses problemas. Nós os vivemos e construímos as soluções.
-              </p>
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      <hr className="brand" />
-
-      {/* ── DOIS CAMINHOS ─────────────────────────────────────────────────── */}
-      <section
-        className="py-16 md:py-28 relative overflow-hidden"
-        style={{ background: "linear-gradient(180deg, #0A0A0A 0%, #0D0A14 50%, #071318 100%)" }}
-      >
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <AnimatedSection>
-              <span className="section-label">O que fazemos</span>
-              <h2
-                className="text-3xl md:text-5xl font-bold mt-3 mb-4"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-              >
-                Para quem quer crescer na internet.{" "}
-                <span className="gradient-text italic">E para quem ajuda outros a crescerem.</span>
-              </h2>
-            </AnimatedSection>
-            <AnimatedSection delay={100}>
-              <p className="text-base" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
-                A BeSmart atua em duas frentes complementares: como agência de gestão de redes sociais
-                para marcas e negócios, e como desenvolvedora de tecnologia para agências que querem
-                escalar sem se perder na operação.
-              </p>
-            </AnimatedSection>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <AnimatedSection delay={100}>
-              <div className="glass-purple rounded-3xl p-8 md:p-10 flex flex-col h-full">
-                <div className="badge badge-purple mb-4">Para marcas e negócios</div>
-                <h3
-                  className="text-2xl font-bold mb-4"
-                  style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                >
-                  Sua presença digital, do início ao fim.
-                </h3>
-                <p
-                  className="leading-relaxed flex-1 mb-8"
-                  style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  Cuidamos da sua presença digital do início ao fim. Estratégia, criação, aprovação e
-                  análise, tudo com processo e consistência, todo mês.
-                </p>
-                <a href={WA_LINK} className="btn-whatsapp self-start">
-                  <WhatsAppIcon />
-                  Quero a BeSmart gerenciando minhas redes
-                </a>
-              </div>
-            </AnimatedSection>
-
-            <AnimatedSection delay={200}>
-              <div className="glass-teal rounded-3xl p-8 md:p-10 flex flex-col h-full">
-                <div className="badge badge-teal mb-4">Para agências</div>
-                <h3
-                  className="text-2xl font-bold mb-4"
-                  style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                >
-                  As ferramentas que usamos para escalar.
-                </h3>
-                <p
-                  className="leading-relaxed flex-1 mb-8"
-                  style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  Disponibilizamos as ferramentas que construímos para escalar nossa própria operação.
-                  Testadas com 36 clientes reais, prontas para transformar a sua agência também.
-                </p>
-                <a
-                  href="#produtos"
-                  className="btn-secondary self-start"
-                  style={{ borderColor: "rgba(46, 155, 175, 0.5)" }}
-                >
-                  Ver os produtos para agências
-                  <ArrowRightIcon />
-                </a>
-              </div>
-            </AnimatedSection>
-          </div>
         </div>
       </section>
 
@@ -522,8 +280,14 @@ export default function Home() {
                     </p>
                     <a
                       href={ORBIT_LINK}
-                      className="btn-link font-semibold"
-                      style={{ color: "#9B6BB5" }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary font-semibold"
+                      style={{
+                        background: "#AEEA00",
+                        color: "#0a0a0a",
+                        boxShadow: "0 0 18px rgba(174,234,0,0.35)",
+                      }}
                     >
                       Conhecer o OrbitAI
                       <ArrowRightIcon />
@@ -585,7 +349,9 @@ export default function Home() {
                     ))}
                   </div>
                   <a
-                    href={WA_LINK}
+                    href={PROSPECT_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="btn-whatsapp self-start"
                     style={{ background: "#2E9BAF" }}
                   >
@@ -636,136 +402,6 @@ export default function Home() {
                 </div>
               </AnimatedSection>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <hr className="brand" />
-
-      {/* ── POR QUE CONFIAR ───────────────────────────────────────────────── */}
-      <section className="py-16 md:py-28 relative overflow-hidden" style={{ background: "#0A0A0A" }}>
-        <div
-          className="orb w-[500px] h-[500px] top-[-100px] right-[-100px]"
-          style={{ background: "rgba(155, 107, 181, 0.07)" }}
-        />
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-16 items-start">
-            <div>
-              <AnimatedSection>
-                <span className="section-label">Por que confiar</span>
-                <h2
-                  className="text-3xl md:text-5xl font-bold mt-3 mb-6"
-                  style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                >
-                  Não ensinamos teoria.{" "}
-                  <span className="gradient-text italic">Mostramos o que funciona na prática.</span>
-                </h2>
-              </AnimatedSection>
-
-              <AnimatedSection delay={100}>
-                <p
-                  className="leading-relaxed mb-4"
-                  style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  Existe uma diferença fundamental entre uma empresa de tecnologia que nunca gerenciou
-                  uma agência e uma agência que construiu sua própria tecnologia.{" "}
-                  <strong style={{ color: "#D1D5DB" }}>Nós somos a segunda.</strong>
-                </p>
-                <p
-                  className="leading-relaxed mb-4"
-                  style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  Cada funcionalidade do OrbitAI, cada fluxo do ProspectAI, cada resposta do Agente
-                  de IA foi pensada, testada e ajustada dentro da nossa própria operação, com clientes
-                  reais, pressão real e resultado real.
-                </p>
-                <p
-                  className="font-semibold"
-                  style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}
-                >
-                  Quando dizemos que funciona, é porque usamos todo dia.
-                </p>
-              </AnimatedSection>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              {[
-                { icon: "🏆", title: "Validado na prática", desc: "Tudo testado com 36 clientes reais antes de chegar até você" },
-                { icon: "🔧", title: "Desenvolvido por quem opera", desc: "Criado por quem entende os problemas de dentro" },
-                { icon: "🚀", title: "Implementação assistida", desc: "Não te deixamos sozinho no onboarding" },
-                { icon: "📈", title: "Evolução contínua", desc: "As ferramentas crescem junto com as demandas reais da operação" },
-              ].map(({ icon, title, desc }, i) => (
-                <AnimatedSection key={title} delay={((i + 1) * 100) as 100 | 200 | 300 | 400}>
-                  <div className="glass rounded-2xl p-5 flex gap-4 items-start hover:border-white/12 transition-all">
-                    <div className="text-2xl flex-shrink-0 mt-0.5">{icon}</div>
-                    <div>
-                      <h4
-                        className="font-semibold mb-1"
-                        style={{ fontFamily: "var(--font-inter), sans-serif", color: "#FFFFFF" }}
-                      >
-                        {title}
-                      </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}
-                      >
-                        {desc}
-                      </p>
-                    </div>
-                  </div>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <hr className="brand" />
-
-      {/* ── VALORES ───────────────────────────────────────────────────────── */}
-      <section
-        className="py-16 md:py-28 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0D0A14 0%, #071318 50%, #0A0A0A 100%)" }}
-      >
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <AnimatedSection>
-              <span className="section-label">Valores</span>
-              <h2
-                className="text-3xl md:text-5xl font-bold mt-3"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-              >
-                Os princípios que guiam{" "}
-                <span className="gradient-text italic">cada decisão</span>
-              </h2>
-            </AnimatedSection>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              { icon: "⚙️", title: "Processo", desc: "Cada etapa mapeada e otimizada para entregar consistência sem abrir mão da qualidade." },
-              { icon: "🎯", title: "Propósito", desc: "Fazemos marketing com intenção clara: gerar resultado real para nossos clientes." },
-              { icon: "💡", title: "Criatividade", desc: "Ideias originais e estratégicas que fazem a diferença na presença digital." },
-              { icon: "📊", title: "Dados", desc: "Cada decisão baseada em análise, métricas e evolução contínua." },
-            ].map(({ icon, title, desc }, i) => (
-              <AnimatedSection key={title} delay={((i + 1) * 100) as 100 | 200 | 300 | 400}>
-                <div className="glass rounded-2xl p-7 text-center hover:border-white/12 transition-all h-full flex flex-col items-center">
-                  <div className="text-3xl mb-4">{icon}</div>
-                  <h3
-                    className="font-semibold text-lg mb-2"
-                    style={{ fontFamily: "var(--font-inter), sans-serif", color: "#FFFFFF" }}
-                  >
-                    {title}
-                  </h3>
-                  <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}
-                  >
-                    {desc}
-                  </p>
-                </div>
-              </AnimatedSection>
-            ))}
           </div>
         </div>
       </section>
@@ -861,7 +497,7 @@ export default function Home() {
                 {[
                   ["Gestão de Redes Sociais", "#gestao"],
                   ["OrbitAI", ORBIT_LINK],
-                  ["ProspectAI", WA_LINK],
+                  ["ProspectAI", PROSPECT_LINK],
                   ["Agente de IA", WA_LINK],
                   ["Sobre nós", "#sobre"],
                 ].map(([label, href]) => (
