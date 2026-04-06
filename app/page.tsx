@@ -104,8 +104,8 @@ export default function Home() {
                 style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
               >
                 A BeSmart é uma agência de social media que virou referência em processo e tecnologia.
-                Gerenciamos 36 clientes e desenvolvemos as ferramentas que nos permitiram crescer
-                sem travar. Hoje, essas ferramentas estão disponíveis para outras agências.
+                Gerenciamos 37 clientes ativos e já atendemos mais de 130 ao longo dos anos, em 3 países.
+                Desenvolvemos as ferramentas que nos permitiram crescer sem travar — e hoje elas estão disponíveis para outras agências.
               </p>
             </AnimatedSection>
 
@@ -126,9 +126,9 @@ export default function Home() {
           <AnimatedSection delay={400}>
             <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { num: "36+", label: "Clientes ativos gerenciados" },
-                { num: "6+", label: "Anos operando e otimizando" },
-                { num: "3", label: "Ferramentas desenvolvidas" },
+                { num: "37", label: "Clientes ativos gerenciados" },
+                { num: "130+", label: "Clientes já atendidos" },
+                { num: "3", label: "Países atendidos" },
                 { num: "100%", label: "Das soluções testadas internamente" },
               ].map(({ num, label }) => (
                 <div key={label} className="glass rounded-2xl p-5">
@@ -179,7 +179,7 @@ export default function Home() {
                   className="leading-relaxed mb-8"
                   style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
                 >
-                  Gerenciamos a presença digital de mais de 36 clientes com um processo estruturado
+                  Gerenciamos a presença digital de 37 clientes ativos com um processo estruturado
                   de ponta a ponta. Nada é improvisado: cada cliente tem estratégia própria, calendário
                   editorial, fluxo de aprovação e relatório mensal de performance.
                 </p>
@@ -248,7 +248,7 @@ export default function Home() {
             </AnimatedSection>
             <AnimatedSection delay={100}>
               <p className="text-base" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
-                Construídas por quem gerenciou 36 clientes de social media por 6 anos. Não são promessas:
+                Construídas por quem gerenciou mais de 130 clientes de social media em 3 países. Não são promessas:
                 são as mesmas ferramentas que usamos todo dia para manter nossa operação funcionando sem
                 depender de nós no operacional.
               </p>
