@@ -355,7 +355,6 @@ export default function Home() {
                     className="btn-whatsapp self-start"
                     style={{ background: "#2E9BAF" }}
                   >
-                    <WhatsAppIcon />
                     Quero conhecer o ProspectAI
                   </a>
                 </div>
