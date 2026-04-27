@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 
-const WA_LINK = "https://wa.me/5500000000000";
+const WA_LINK = "https://wa.me/555121438299";
 
 export default function MobileMenu() {
   const [open, setOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function MobileMenu() {
               {[
                 ["Sobre nós", "#sobre"],
                 ["Gestão de Redes", "#gestao"],
-                ["Produtos", "#produtos"],
+                ["Ferramentas", "#produtos"],
                 ["Contato", "#contato"],
               ].map(([label, href]) => (
                 <a
