@@ -29,7 +29,7 @@ function statusClass(s: string) {
 export default async function ProjetoPage({ params }: Props) {
   const { clienteId, projetoId } = await params;
 
-  const [{ data: projeto }, { data: cliente }, { data: diagnostico }, { data: itens }, { data: etapas }, { data: parcelas }] =
+  const [{ data: projeto }, { data: cliente }, { data: diagnostico }, { data: itens }, { data: etapas }, { data: parcelas }, { data: chamados }] =
     await Promise.all([
       supabase.from("projetos").select("*").eq("id", projetoId).single(),
       supabase.from("clientes").select("id, nome, empresa").eq("id", clienteId).single(),
@@ -37,6 +37,7 @@ export default async function ProjetoPage({ params }: Props) {
       supabase.from("itens_escopo").select("*").eq("projeto_id", projetoId).order("ordem"),
       supabase.from("etapas").select("*").eq("projeto_id", projetoId).order("ordem"),
       supabase.from("parcelas").select("*").eq("projeto_id", projetoId).order("vencimento"),
+      supabase.from("chamados").select("*").eq("projeto_id", projetoId).order("created_at", { ascending: false }),
     ]);
 
   if (!projeto || !cliente) notFound();
@@ -100,6 +101,7 @@ export default async function ProjetoPage({ params }: Props) {
         itens={itens ?? []}
         etapas={etapas ?? []}
         parcelas={parcelas ?? []}
+        chamados={chamados ?? []}
         totalPago={totalPago}
         totalReceber={totalReceber}
       />

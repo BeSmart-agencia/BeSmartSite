@@ -9,6 +9,8 @@ import {
   adicionarParcela,
   marcarParcelaPaga,
   atualizarStatusProjeto,
+  abrirChamado,
+  atualizarStatusChamado,
 } from "@/app/admin/sistemas/actions";
 import { useRouter } from "next/navigation";
 
@@ -32,6 +34,8 @@ type ItemEscopo = { id: string; descricao: string; concluido: boolean };
 type Etapa = { id: string; nome: string; responsavel: string | null; prazo: string | null; status: string };
 type Parcela = { id: string; valor: number; vencimento: string | null; status: string; descricao: string | null };
 
+type Chamado = { id: string; titulo: string; descricao: string | null; status: string; created_at: string };
+
 type Props = {
   projeto: Projeto;
   clienteId: string;
@@ -40,11 +44,12 @@ type Props = {
   itens: ItemEscopo[];
   etapas: Etapa[];
   parcelas: Parcela[];
+  chamados: Chamado[];
   totalPago: number;
   totalReceber: number;
 };
 
-const TABS = ["Escopo", "Etapas", "Financeiro", "Apresentação"] as const;
+const TABS = ["Escopo", "Etapas", "Financeiro", "Chamados", "Apresentação"] as const;
 type Tab = (typeof TABS)[number];
 
 function money(v: number) {
@@ -553,6 +558,93 @@ function AbaApresentacao({
   );
 }
 
+// ── Aba Chamados ─────────────────────────────────────────────────────────────
+
+function AbaChamados({ projetoId, clienteId, chamados }: { projetoId: string; clienteId: string; chamados: Chamado[] }) {
+  const [open, setOpen] = useState(false);
+  const [localChamados, setLocalChamados] = useState(chamados);
+  const router = useRouter();
+
+  const [titulo, setTitulo] = useState("");
+  const [desc, setDesc] = useState("");
+
+  const statusCores: Record<string, { bg: string; color: string; border: string }> = {
+    aberto: { bg: "rgba(251,191,36,0.1)", color: "#FCD34D", border: "rgba(251,191,36,0.25)" },
+    "em andamento": { bg: "rgba(155,107,181,0.1)", color: "#9B6BB5", border: "rgba(155,107,181,0.25)" },
+    resolvido: { bg: "rgba(34,197,94,0.1)", color: "#4ADE80", border: "rgba(34,197,94,0.25)" },
+  };
+
+  async function addChamado(e: React.FormEvent) {
+    e.preventDefault();
+    if (!titulo.trim()) return;
+    const fd = new FormData();
+    fd.append("titulo", titulo);
+    fd.append("descricao", desc);
+    await abrirChamado(clienteId, projetoId, fd);
+    setLocalChamados((prev) => [...prev, { id: "tmp-" + Date.now(), titulo, descricao: desc || null, status: "aberto", created_at: new Date().toISOString() }]);
+    setTitulo(""); setDesc("");
+    setOpen(false);
+    router.refresh();
+  }
+
+  async function fechar(id: string) {
+    setLocalChamados((prev) => prev.map((c) => c.id === id ? { ...c, status: "resolvido" } : c));
+    await atualizarStatusChamado(id, "resolvido");
+    router.refresh();
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        {localChamados.map((c) => {
+          const cor = statusCores[c.status] ?? statusCores["aberto"];
+          return (
+            <div key={c.id} className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${cor.border}` }}>
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium text-sm text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>{c.titulo}</p>
+                <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: cor.bg, color: cor.color, fontFamily: "var(--font-inter), sans-serif" }}>
+                  {c.status}
+                </span>
+              </div>
+              {c.descricao && <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>{c.descricao}</p>}
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-xs" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
+                  {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                </span>
+                {c.status !== "resolvido" && (
+                  <button type="button" onClick={() => fechar(c.id)} className="text-xs px-2.5 py-1 rounded-lg transition-all"
+                    style={{ background: "rgba(34,197,94,0.10)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.2)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+                    Resolver
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {localChamados.length === 0 && (
+          <p className="text-sm text-center py-6" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>Nenhum chamado aberto.</p>
+        )}
+      </div>
+
+      {open ? (
+        <form onSubmit={addChamado} className="glass rounded-xl p-4 flex flex-col gap-3">
+          <input value={titulo} onChange={(e) => setTitulo(e.target.value)} required className="admin-input" placeholder="Título do chamado *" />
+          <textarea value={desc} onChange={(e) => setDesc(e.target.value)} className="admin-textarea" placeholder="Descrição do problema..." rows={3} />
+          <div className="flex gap-2">
+            <button type="submit" className="btn-primary flex-1 justify-center" style={{ fontSize: "13px", padding: "9px 16px" }}>Abrir chamado</button>
+            <button type="button" onClick={() => setOpen(false)} className="btn-secondary" style={{ fontSize: "13px" }}>Cancelar</button>
+          </div>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} className="w-full text-sm py-3 rounded-xl transition-all hover:bg-white/5"
+          style={{ border: "1px dashed rgba(255,255,255,0.10)", color: "#6B7280", fontFamily: "var(--font-inter), sans-serif", cursor: "pointer", background: "transparent" }}>
+          + Novo chamado
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ProjetoTabs({
@@ -563,6 +655,7 @@ export function ProjetoTabs({
   itens,
   etapas,
   parcelas,
+  chamados,
   totalPago,
   totalReceber,
 }: Props) {
@@ -571,15 +664,22 @@ export function ProjetoTabs({
   return (
     <div>
       {/* Tab bar */}
-      <div className="admin-tabs mb-5">
+      <div className="admin-tabs mb-5" style={{ overflowX: "auto" }}>
         {TABS.map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
             className={`admin-tab ${tab === t ? "active" : ""}`}
+            style={{ whiteSpace: "nowrap" }}
           >
             {t}
+            {t === "Chamados" && chamados.filter(c => c.status === "aberto").length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-xs font-bold"
+                style={{ background: "#FCD34D", color: "#0A0A0A", fontSize: "10px" }}>
+                {chamados.filter(c => c.status === "aberto").length}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -593,6 +693,9 @@ export function ProjetoTabs({
       )}
       {tab === "Financeiro" && (
         <AbaFinanceiro projeto={projeto} parcelas={parcelas} totalPago={totalPago} totalReceber={totalReceber} clienteId={clienteId} />
+      )}
+      {tab === "Chamados" && (
+        <AbaChamados projetoId={projeto.id} clienteId={clienteId} chamados={chamados} />
       )}
       {tab === "Apresentação" && (
         <AbaApresentacao projeto={projeto} cliente={cliente} diagnostico={diagnostico} itens={itens} etapas={etapas} />

@@ -28,6 +28,7 @@ export default async function ClientePerfilPage({ params }: Props) {
 
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const onboardingLink = `${base}/onboarding/${cliente.onboarding_token}`;
+  const portalLink = `${base}/portal/${cliente.onboarding_token}`;
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto">
@@ -100,17 +101,21 @@ export default async function ClientePerfilPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Onboarding link */}
-        <div className="mt-4 pt-4 border-t border-white/5">
-          <p className="admin-label mb-2">Link de onboarding</p>
-          <div className="flex items-center gap-3">
-            <p
-              className="text-xs flex-1 truncate"
-              style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}
-            >
-              {onboardingLink}
-            </p>
-            <CopyButton text={onboardingLink} label="Copiar" />
+        {/* Links */}
+        <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-3">
+          <div>
+            <p className="admin-label mb-1.5">Link de onboarding</p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs flex-1 truncate" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>{onboardingLink}</p>
+              <CopyButton text={onboardingLink} label="Copiar" />
+            </div>
+          </div>
+          <div>
+            <p className="admin-label mb-1.5">Portal do cliente</p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs flex-1 truncate" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>{portalLink}</p>
+              <CopyButton text={portalLink} label="Copiar" />
+            </div>
           </div>
         </div>
 
@@ -129,22 +134,26 @@ export default async function ClientePerfilPage({ params }: Props) {
       </div>
 
       {/* Projetos */}
-      <div className="mb-4">
-        <h2
-          className="font-semibold text-white"
-          style={{ fontFamily: "var(--font-inter), sans-serif" }}
-        >
-          Projetos
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-semibold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+          Projetos {projetos?.length ? `(${projetos.length})` : ""}
         </h2>
+        <NovoProjeto clienteId={clienteId} inline />
       </div>
 
       <div className="flex flex-col gap-4 mb-4">
         {projetos?.map((p) => (
           <ProjetoCard key={p.id} projeto={p} clienteId={clienteId} />
         ))}
+        {!projetos?.length && (
+          <div className="glass rounded-2xl p-10 text-center">
+            <p className="text-sm mb-4" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
+              Nenhum projeto criado ainda.
+            </p>
+            <NovoProjeto clienteId={clienteId} />
+          </div>
+        )}
       </div>
-
-      <NovoProjeto clienteId={clienteId} />
     </div>
   );
 }

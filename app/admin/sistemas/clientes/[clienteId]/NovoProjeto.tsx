@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 type State = { error?: string; success?: boolean; projetoId?: string };
 
-export function NovoProjeto({ clienteId }: { clienteId: string }) {
+export function NovoProjeto({ clienteId, inline = false }: { clienteId: string; inline?: boolean }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -23,17 +23,22 @@ export function NovoProjeto({ clienteId }: { clienteId: string }) {
   );
 
   if (!open) {
-    return (
+    return inline ? (
+      <button
+        onClick={() => setOpen(true)}
+        className="btn-primary"
+        style={{ fontSize: "13px", padding: "9px 16px", cursor: "pointer" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Novo Projeto
+      </button>
+    ) : (
       <button
         onClick={() => setOpen(true)}
         className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-medium transition-all hover:bg-white/5"
-        style={{
-          border: "2px dashed rgba(255,255,255,0.10)",
-          color: "#6B7280",
-          fontFamily: "var(--font-inter), sans-serif",
-          cursor: "pointer",
-          background: "transparent",
-        }}
+        style={{ border: "2px dashed rgba(255,255,255,0.10)", color: "#6B7280", fontFamily: "var(--font-inter), sans-serif", cursor: "pointer", background: "transparent" }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />

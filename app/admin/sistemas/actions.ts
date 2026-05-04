@@ -4,6 +4,47 @@ import { supabase } from "@/app/lib/supabase";
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "crypto";
 
+// ── Chamados ─────────────────────────────────────────────────────────────────
+
+export async function abrirChamado(clienteId: string, projetoId: string, formData: FormData) {
+  const titulo = formData.get("titulo") as string;
+  if (!titulo) return { error: "Título obrigatório." };
+
+  const { error } = await supabase.from("chamados").insert({
+    cliente_id: clienteId,
+    projeto_id: projetoId,
+    titulo,
+    descricao: (formData.get("descricao") as string) || null,
+    status: "aberto",
+  });
+
+  if (error) return { error: "Erro ao abrir chamado: " + error.message };
+
+  revalidatePath("/admin/sistemas/chamados");
+  return { success: true };
+}
+
+export async function responderChamado(chamadoId: string, formData: FormData) {
+  const resposta = formData.get("resposta") as string;
+  const status = (formData.get("status") as string) || "em andamento";
+
+  const { error } = await supabase
+    .from("chamados")
+    .update({ resposta, status })
+    .eq("id", chamadoId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/sistemas/chamados");
+  return { success: true };
+}
+
+export async function atualizarStatusChamado(chamadoId: string, status: string) {
+  const { error } = await supabase.from("chamados").update({ status }).eq("id", chamadoId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/sistemas/chamados");
+  return { success: true };
+}
+
 function generateToken() {
   return randomBytes(20).toString("hex");
 }
