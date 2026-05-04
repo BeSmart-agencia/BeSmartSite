@@ -3,8 +3,6 @@ import AnimatedSection from "./components/AnimatedSection";
 import MobileMenu from "./components/MobileMenu";
 
 const WA_LINK = "https://wa.me/555121438299";
-const ORBIT_LINK = "https://www.orbitaibesmart.com.br/";
-const PROSPECT_LINK = "https://prospectai-kohl.vercel.app/";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -308,7 +306,7 @@ export default function Home() {
 
       <hr className="brand" />
 
-      {/* ── FERRAMENTAS E SOLUÇÕES ─────────────────────────────────────────── */}
+      {/* ── O QUE OFERECEMOS ──────────────────────────────────────────────── */}
       <section
         id="produtos"
         className="py-16 md:py-28 relative overflow-hidden"
@@ -321,72 +319,59 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <AnimatedSection>
-              <span className="section-label">Ferramentas e Soluções</span>
+              <span className="section-label">O que oferecemos</span>
               <h2
                 className="text-3xl md:text-5xl font-bold mt-3 mb-4"
                 style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
               >
-                Tecnologia desenvolvida{" "}
-                <span className="gradient-text italic">na prática.</span>
+                Presença digital e tecnologia{" "}
+                <span className="gradient-text italic">que geram resultado.</span>
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={100}>
               <p className="text-base" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
-                Além da gestão de redes, desenvolvemos ferramentas próprias testadas internamente com
-                mais de 130 clientes. Ferramentas que resolvem problemas reais.
+                Gestão de redes sociais para marcas que querem crescer online e sistemas sob medida
+                para empresas que precisam de tecnologia que funciona de verdade.
               </p>
             </AnimatedSection>
           </div>
 
           <div className="flex flex-col gap-8">
 
-            {/* ─ ProspectAI ────────────────────────────────────────────────── */}
+            {/* ─ Sistemas Sob Medida (destaque) ────────────────────────────── */}
             <AnimatedSection>
               <div className="glass-teal rounded-3xl p-8 md:p-12">
                 <div className="grid md:grid-cols-2 gap-10 items-start">
                   <div>
-                    <div className="badge badge-teal mb-4">Prospecção Automática</div>
+                    <div className="badge badge-teal mb-4">Sistemas Sob Medida</div>
                     <h3
                       className="text-3xl md:text-4xl font-bold mb-4"
                       style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
                     >
-                      Pare de prospectar na mão.{" "}
-                      <span style={{ color: "#2E9BAF" }}>
-                        Encontre novos clientes no automático.
-                      </span>
+                      Seu processo não cabe em ferramenta pronta?{" "}
+                      <span style={{ color: "#2E9BAF" }}>A gente constrói o que você precisa.</span>
                     </h3>
                     <p
-                      className="leading-relaxed mb-4"
+                      className="leading-relaxed mb-8"
                       style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
                     >
-                      Você digita um nicho e uma cidade — o ProspectAI busca negócios reais no Google
-                      Maps, filtra os de melhor potencial e gera uma mensagem de WhatsApp personalizada
-                      para cada um usando IA. Você só precisa enviar.
+                      Desenvolvemos sistemas personalizados para empresas que precisam automatizar
+                      processos específicos — atendimento, prospecção, gestão interna, integrações.
+                      Cada sistema é pensado para o seu negócio, construído com IA onde faz sentido.
                     </p>
-                    <p
-                      className="text-xs mb-8"
-                      style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}
-                    >
-                      Planos Starter e Pro — assinatura mensal
-                    </p>
-                    <a
-                      href={PROSPECT_LINK}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-whatsapp"
-                      style={{ background: "#2E9BAF" }}
-                    >
+                    <a href={WA_LINK} className="btn-whatsapp" style={{ background: "#2E9BAF" }}>
                       <WhatsAppIcon />
-                      Quero conhecer o ProspectAI
+                      Quero agendar uma reunião estratégica
                     </a>
                   </div>
                   <div className="flex flex-col gap-3">
                     {[
-                      "Busca automática de negócios por nicho e cidade no Google Maps",
-                      "Filtro inteligente para focar nos leads com mais potencial",
-                      "Mensagem personalizada gerada por IA para cada contato",
-                      "Histórico completo: contatado, respondeu, virou cliente",
-                      "Escale sua prospecção sem contratar mais ninguém",
+                      "Automação de atendimento e qualificação de leads no WhatsApp",
+                      "Integrações entre ferramentas que não se conversam",
+                      "Sistemas internos para gestão de processos e equipes",
+                      "Agentes de IA para tarefas repetitivas e operacionais",
+                      "Portal do cliente, dashboards e relatórios automáticos",
+                      "Do briefing à entrega — sem achismo, com processo",
                     ].map((item) => (
                       <div key={item} className="check-item">
                         <span style={{ color: "#2E9BAF", flexShrink: 0 }}>
@@ -400,70 +385,53 @@ export default function Home() {
               </div>
             </AnimatedSection>
 
-            {/* ─ OrbitAI ───────────────────────────────────────────────────── */}
-            <AnimatedSection delay={100}>
-              <div className="glass-purple rounded-3xl p-8 md:p-12">
-                <div className="grid md:grid-cols-2 gap-10 items-start">
-                  <div>
-                    <div className="badge badge-purple mb-4">Sistema de Gestão para Agências</div>
-                    <h3
-                      className="text-3xl md:text-4xl font-bold mb-4"
-                      style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                    >
-                      Sua agência inteira em um único sistema.{" "}
-                      <span className="gradient-text italic">Do planejamento ao financeiro.</span>
-                    </h3>
-                    <p
-                      className="leading-relaxed mb-8"
-                      style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                    >
-                      O OrbitAI nasceu porque nenhuma ferramenta do mercado resolvia tudo que uma agência
-                      de social media precisa. Construímos do zero — integrando IA para geração de
-                      conteúdo, portal de aprovação para clientes, kanban para a equipe e controle
-                      financeiro em um só lugar.
-                    </p>
-                    <a
-                      href={ORBIT_LINK}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary font-semibold"
-                      style={{
-                        background: "#AEEA00",
-                        color: "#0a0a0a",
-                        boxShadow: "0 0 18px rgba(174,234,0,0.35)",
-                      }}
-                    >
-                      Conhecer o OrbitAI
-                      <ArrowRightIcon />
-                    </a>
-                  </div>
-                  <div className="flex flex-col gap-3">
+            {/* ─ Social Media + OrbitAI Slim ───────────────────────────────── */}
+            <div className="grid md:grid-cols-2 gap-6">
+
+              {/* Social Media */}
+              <AnimatedSection>
+                <div className="glass-purple rounded-3xl p-8 flex flex-col h-full">
+                  <div className="badge badge-purple mb-4">Gestão de Redes Sociais</div>
+                  <h3
+                    className="text-2xl md:text-3xl font-bold mb-4"
+                    style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+                  >
+                    Sua marca{" "}
+                    <span className="gradient-text italic">presente, consistente</span>{" "}
+                    e gerando resultado — todo mês.
+                  </h3>
+                  <p
+                    className="leading-relaxed mb-6"
+                    style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
+                  >
+                    Gerenciamos a presença digital de mais de 36 clientes com processo estruturado
+                    de ponta a ponta. Estratégia, criação, aprovação e análise — tudo incluso.
+                  </p>
+                  <div className="flex flex-col gap-2.5 mb-8 flex-1">
                     {[
-                      "Planejamentos editoriais gerados por IA em segundos",
-                      "Portal de aprovação para o cliente — só um link, sem login",
-                      "Kanban da equipe com notificações automáticas",
-                      "Controle financeiro com alertas de inadimplência",
-                      "Onboarding de novos clientes em menos de 5 minutos",
-                      "Visibilidade total da produção em tempo real",
+                      "Estratégia mensal personalizada para o seu negócio",
+                      "Design e conteúdo com identidade visual consistente",
+                      "Fluxo de aprovação sem complicação",
+                      "Relatório mensal de performance com dados reais",
                     ].map((item) => (
-                      <div key={item} className="check-item">
+                      <div key={item} className="check-item text-sm">
                         <span className="check-icon"><CheckIcon /></span>
                         <span style={{ fontFamily: "var(--font-inter), sans-serif" }}>{item}</span>
                       </div>
                     ))}
                   </div>
+                  <a href={WA_LINK} className="btn-whatsapp self-start" style={{ background: "#9B6BB5" }}>
+                    <WhatsAppIcon />
+                    Quero a BeSmart nas minhas redes
+                  </a>
                 </div>
-              </div>
-            </AnimatedSection>
-
-            {/* ─ OrbitAI Slim + Sistemas ───────────────────────────────────── */}
-            <div className="grid md:grid-cols-2 gap-6">
+              </AnimatedSection>
 
               {/* OrbitAI Slim - em breve */}
-              <AnimatedSection>
+              <AnimatedSection delay={100}>
                 <div
-                  className="glass-purple rounded-3xl p-8 flex flex-col h-full"
-                  style={{ opacity: 0.85 }}
+                  className="glass rounded-3xl p-8 flex flex-col h-full"
+                  style={{ opacity: 0.82 }}
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div className="badge badge-purple">Conteúdo com IA</div>
@@ -484,7 +452,7 @@ export default function Home() {
                     className="text-2xl md:text-3xl font-bold mb-4"
                     style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
                   >
-                    OrbitAI Slim.{" "}
+                    OrbitAI Creator.{" "}
                     <span className="gradient-text italic">
                       Crie seu próprio conteúdo com IA — sem depender de agência.
                     </span>
@@ -493,9 +461,9 @@ export default function Home() {
                     className="leading-relaxed mb-6"
                     style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
                   >
-                    Para criadores de conteúdo que querem produzir com consistência sem perder tempo.
-                    Você define sua estratégia uma vez — a IA gera seu planejamento editorial completo,
-                    com posts, legendas e roteiros prontos para publicar.
+                    Para criadores de conteúdo e pequenos negócios que querem consistência sem
+                    perder tempo. Defina sua estratégia uma vez — a IA gera planejamento editorial
+                    completo com posts, legendas e roteiros prontos para publicar.
                   </p>
                   <div className="flex flex-col gap-2.5 mb-8 flex-1">
                     {[
@@ -510,59 +478,9 @@ export default function Home() {
                       </div>
                     ))}
                   </div>
-                  <a
-                    href={WA_LINK}
-                    className="btn-whatsapp self-start"
-                    style={{ background: "#9B6BB5" }}
-                  >
+                  <a href={WA_LINK} className="btn-whatsapp self-start" style={{ background: "#9B6BB5" }}>
                     <WhatsAppIcon />
                     Me avise quando lançar
-                  </a>
-                </div>
-              </AnimatedSection>
-
-              {/* Sistemas Sob Medida */}
-              <AnimatedSection delay={100}>
-                <div className="glass rounded-3xl p-8 flex flex-col h-full">
-                  <div className="badge badge-teal mb-4">Tecnologia</div>
-                  <h3
-                    className="text-2xl md:text-3xl font-bold mb-4"
-                    style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                  >
-                    Seu processo não cabe em ferramenta pronta?{" "}
-                    <span style={{ color: "#2E9BAF" }}>A gente constrói o que você precisa.</span>
-                  </h3>
-                  <p
-                    className="leading-relaxed mb-6"
-                    style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}
-                  >
-                    Desenvolvemos sistemas personalizados para empresas que precisam automatizar processos
-                    específicos — atendimento, prospecção, gestão interna, integrações entre ferramentas.
-                    Cada sistema é pensado para o seu negócio, construído com IA onde faz sentido.
-                  </p>
-                  <div className="flex flex-col gap-2.5 mb-8 flex-1">
-                    {[
-                      "Automação de atendimento e qualificação de leads no WhatsApp",
-                      "Integrações entre ferramentas que não se conversam",
-                      "Sistemas internos para gestão de processos e equipes",
-                      "Agentes de IA para tarefas repetitivas e operacionais",
-                      "Do briefing à entrega — sem achismo, com processo",
-                    ].map((item) => (
-                      <div key={item} className="check-item text-sm">
-                        <span style={{ color: "#2E9BAF", flexShrink: 0, marginTop: "2px" }}>
-                          <CheckIcon />
-                        </span>
-                        <span style={{ fontFamily: "var(--font-inter), sans-serif" }}>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <a
-                    href={WA_LINK}
-                    className="btn-whatsapp self-start"
-                    style={{ background: "#2E9BAF" }}
-                  >
-                    <WhatsAppIcon />
-                    Quero agendar uma reunião estratégica
                   </a>
                 </div>
               </AnimatedSection>
@@ -733,10 +651,8 @@ export default function Home() {
               <ul className="flex flex-col gap-3">
                 {[
                   ["Social Media", "#gestao"],
-                  ["ProspectAI", PROSPECT_LINK],
-                  ["OrbitAI", ORBIT_LINK],
-                  ["OrbitAI Slim (Em breve)", "#produtos"],
                   ["Sistemas Sob Medida", "#produtos"],
+                  ["OrbitAI Creator (Em breve)", "#produtos"],
                   ["Falar no WhatsApp", WA_LINK],
                 ].map(([label, href]) => (
                   <li key={label}>
