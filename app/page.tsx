@@ -783,12 +783,13 @@ export default function Home() {
             >
               © 2025 BeSmart Agência de Ideias. Todos os direitos reservados.
             </p>
-            <p
+            <a
+              href="/admin/login"
               className="text-xs italic"
-              style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}
+              style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif", textDecoration: "none" }}
             >
               BeSmart — Agência de Ideias
-            </p>
+            </a>
           </div>
         </div>
       </footer>
