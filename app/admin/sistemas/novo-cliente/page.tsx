@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { cadastrarCliente } from "@/app/admin/sistemas/actions";
 import Link from "next/link";
 
@@ -37,9 +37,13 @@ export default function NovoClientePage() {
     {}
   );
 
+  const [copied, setCopied] = useState(false);
+
   async function copyLink() {
     if (state.link) {
       await navigator.clipboard.writeText(state.link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   }
 
@@ -75,9 +79,13 @@ export default function NovoClientePage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button onClick={copyLink} className="btn-primary" style={{ fontSize: "14px", padding: "11px 22px" }}>
+            <button
+              onClick={copyLink}
+              className="btn-primary"
+              style={{ fontSize: "14px", padding: "11px 22px", background: copied ? "#16a34a" : undefined, transition: "background 0.2s" }}
+            >
               <CopyIcon />
-              Copiar link
+              {copied ? "Copiado!" : "Copiar link"}
             </button>
             <Link href={`/admin/sistemas/clientes/${state.clienteId}`} className="btn-secondary" style={{ fontSize: "14px", padding: "10px 21px" }}>
               Ver perfil do cliente
