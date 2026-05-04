@@ -22,12 +22,17 @@ export default async function PortalPage({ params }: Props) {
 
   if (!cliente) notFound();
 
-  const [{ data: projetos }, { data: chamadosAbertos }] = await Promise.all([
+  const [{ data: projetos }, { data: diagnostico }, { data: chamadosAbertos }] = await Promise.all([
     supabase
       .from("projetos")
-      .select("id, nome, descricao, status, data_inicio, prazo_entrega, valor_total")
+      .select("id, nome, descricao, status, data_inicio, prazo_entrega, valor_total, forma_pagamento")
       .eq("cliente_id", cliente.id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("diagnosticos")
+      .select("resolver_uma_coisa, impacto_resolucao")
+      .eq("cliente_id", cliente.id)
+      .maybeSingle(),
     supabase
       .from("chamados")
       .select("id")
@@ -70,6 +75,7 @@ export default async function PortalPage({ params }: Props) {
           etapas={etapas ?? []}
           itens={itens ?? []}
           chamados={chamados ?? []}
+          diagnostico={diagnostico ?? null}
         />
       </div>
     </div>

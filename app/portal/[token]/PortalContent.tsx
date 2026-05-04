@@ -4,7 +4,8 @@ import { useState, useActionState } from "react";
 import { abrirChamado } from "@/app/admin/sistemas/actions";
 import { useRouter } from "next/navigation";
 
-type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null };
+type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null; forma_pagamento: string | null };
+type Diagnostico = { resolver_uma_coisa: string | null; impacto_resolucao: string | null } | null;
 type Etapa = { id: string; projeto_id: string; nome: string; status: string; prazo: string | null; ordem: number };
 type Item = { id: string; projeto_id: string; descricao: string; concluido: boolean };
 type Chamado = { id: string; titulo: string; descricao: string | null; status: string; urgencia: string | null; prazo_resolucao: string | null; resposta: string | null; created_at: string };
@@ -16,6 +17,7 @@ type Props = {
   etapas: Etapa[];
   itens: Item[];
   chamados: Chamado[];
+  diagnostico: Diagnostico;
 };
 
 function statusCor(s: string) {
@@ -98,7 +100,7 @@ function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: s
   );
 }
 
-export function PortalContent({ cliente, projetos, etapas, itens, chamados }: Props) {
+export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico }: Props) {
   const [projetoAtivo, setProjetoAtivo] = useState<string | null>(projetos[0]?.id ?? null);
   const [abaAtiva, setAbaAtiva] = useState<"projeto" | "chamados">("projeto");
 
@@ -214,6 +216,52 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados }: Pr
               </div>
             )}
           </div>
+
+          {/* Proposta */}
+          {(diagnostico?.resolver_uma_coisa || diagnostico?.impacto_resolucao || projeto.valor_total) && (
+            <div className="glass rounded-2xl p-5">
+              <p className="text-xs uppercase tracking-wider font-semibold mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>
+                Proposta
+              </p>
+              <div className="flex flex-col gap-4">
+                {projeto.descricao && (
+                  <div>
+                    <p className="text-xs uppercase tracking-wider font-semibold mb-1.5" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>O que será desenvolvido</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>{projeto.descricao}</p>
+                  </div>
+                )}
+                {diagnostico?.resolver_uma_coisa && (
+                  <div
+                    className="rounded-xl p-4"
+                    style={{ background: "rgba(155,107,181,0.08)", border: "1px solid rgba(155,107,181,0.18)" }}
+                  >
+                    <p className="text-xs uppercase tracking-wider font-semibold mb-1.5" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Principal dor identificada</p>
+                    <p className="text-sm italic leading-relaxed text-white" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                      &ldquo;{diagnostico.resolver_uma_coisa}&rdquo;
+                    </p>
+                  </div>
+                )}
+                {diagnostico?.impacto_resolucao && (
+                  <div>
+                    <p className="text-xs uppercase tracking-wider font-semibold mb-1.5" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>Impacto esperado</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>{diagnostico.impacto_resolucao}</p>
+                  </div>
+                )}
+                {(projeto.valor_total || projeto.forma_pagamento) && (
+                  <div>
+                    <p className="text-xs uppercase tracking-wider font-semibold mb-1.5" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>Investimento</p>
+                    <p className="text-sm font-semibold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                      {projeto.valor_total
+                        ? `R$ ${projeto.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                        : ""}
+                      {projeto.valor_total && projeto.forma_pagamento ? " · " : ""}
+                      {projeto.forma_pagamento ?? ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Etapas */}
           {projetoEtapas.length > 0 && (
