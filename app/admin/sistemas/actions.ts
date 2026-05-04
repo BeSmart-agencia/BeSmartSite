@@ -10,11 +10,16 @@ export async function abrirChamado(clienteId: string, projetoId: string, formDat
   const titulo = formData.get("titulo") as string;
   if (!titulo) return { error: "Título obrigatório." };
 
+  const urgencia = (formData.get("urgencia") as string) || "normal";
+  const prazo_resolucao = (formData.get("prazo_resolucao") as string) || null;
+
   const { error } = await supabase.from("chamados").insert({
     cliente_id: clienteId,
     projeto_id: projetoId,
     titulo,
     descricao: (formData.get("descricao") as string) || null,
+    urgencia,
+    prazo_resolucao,
     status: "aberto",
   });
 

@@ -306,3 +306,73 @@
   background: linear-gradient(90deg, #9B6BB5, #2E9BAF);
   transition: width 0.4s ease;
 }
+
+/* Urgency badges */
+.urgencia-baixa  { background: rgba(107,114,128,0.15); color: #9CA3AF; border: 1px solid rgba(107,114,128,0.25); }
+.urgencia-normal { background: rgba(46,155,175,0.12);  color: #2E9BAF; border: 1px solid rgba(46,155,175,0.25); }
+.urgencia-alta   { background: rgba(251,146,60,0.12);  color: #FB923C; border: 1px solid rgba(251,146,60,0.25); }
+.urgencia-urgente{ background: rgba(239,68,68,0.12);   color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
+
+/* ── Print / PDF export ──────────────────────────────────────────────────── */
+@media print {
+  .no-print,
+  .admin-sidebar,
+  .admin-bottom-nav {
+    display: none !important;
+  }
+
+  .admin-main {
+    margin-left: 0 !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+
+  .form-block {
+    background: #f8f7ff !important;
+    border: 1px solid #e9e3f5 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12px;
+  }
+
+  .form-block-title {
+    color: #6d28d9 !important;
+    border-bottom-color: rgba(109,40,217,0.15) !important;
+  }
+
+  .diag-title {
+    color: #111827 !important;
+  }
+
+  .diag-subtitle {
+    color: #6B7280 !important;
+  }
+
+  .diag-label {
+    color: #374151 !important;
+  }
+
+  .diag-value {
+    color: #111827 !important;
+  }
+
+  .diag-dor {
+    background: #f5f0ff !important;
+    border: 1px solid #c4b5fd !important;
+  }
+
+  .diag-dor-text {
+    color: #2d1b69 !important;
+  }
+
+  .section-label {
+    color: #6d28d9 !important;
+  }
+}

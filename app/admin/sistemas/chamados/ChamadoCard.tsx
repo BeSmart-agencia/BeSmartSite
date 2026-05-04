@@ -9,6 +9,8 @@ type Chamado = {
   titulo: string;
   descricao: string | null;
   status: string;
+  urgencia: string | null;
+  prazo_resolucao: string | null;
   resposta: string | null;
   created_at: string;
   clientes: { nome: string; empresa: string } | null;
@@ -60,6 +62,18 @@ export function ChamadoCard({ chamado, statusClass }: { chamado: Chamado; status
             {chamado.clientes && <span>{chamado.clientes.empresa} · {chamado.clientes.nome}</span>}
             {chamado.projetos && <span>Projeto: {chamado.projetos.nome}</span>}
             <span>{fmt(chamado.created_at)}</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-1.5">
+            {chamado.urgencia && chamado.urgencia !== "normal" && (
+              <span className={`status-badge urgencia-${chamado.urgencia}`}>
+                {chamado.urgencia.charAt(0).toUpperCase() + chamado.urgencia.slice(1)}
+              </span>
+            )}
+            {chamado.prazo_resolucao && (
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.06)", color: "#9CA3AF", border: "1px solid rgba(255,255,255,0.10)", fontFamily: "var(--font-inter), sans-serif" }}>
+                Prazo: {new Date(chamado.prazo_resolucao + "T12:00:00").toLocaleDateString("pt-BR")}
+              </span>
+            )}
           </div>
         </div>
         <span className={statusClass}>{chamado.status}</span>

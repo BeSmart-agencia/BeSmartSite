@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null };
 type Etapa = { id: string; projeto_id: string; nome: string; status: string; prazo: string | null; ordem: number };
 type Item = { id: string; projeto_id: string; descricao: string; concluido: boolean };
-type Chamado = { id: string; titulo: string; descricao: string | null; status: string; resposta: string | null; created_at: string };
+type Chamado = { id: string; titulo: string; descricao: string | null; status: string; urgencia: string | null; prazo_resolucao: string | null; resposta: string | null; created_at: string };
 type Cliente = { id: string; nome: string; empresa: string };
 
 type Props = {
@@ -41,8 +41,17 @@ function fmt(d: string) {
 
 type FormState = { error?: string; success?: boolean };
 
+function proximoDiaUtil(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  return d.toISOString().split("T")[0];
+}
+
 function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: string }) {
   const router = useRouter();
+  const minDate = proximoDiaUtil();
+
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     async (_prev, fd) => {
       const result = await abrirChamado(clienteId, projetoId, fd);
@@ -65,7 +74,22 @@ function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: s
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <input name="titulo" required className="admin-input" placeholder="Título do chamado *" />
-      <textarea name="descricao" className="admin-textarea" placeholder="Descreva o problema ou dúvida..." rows={3} />
+      <textarea name="descricao" className="admin-textarea" placeholder="Descreva o problema ou dúvida com detalhes..." rows={3} />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="admin-field">
+          <label className="admin-label">Urgência</label>
+          <select name="urgencia" className="admin-select" defaultValue="normal">
+            <option value="baixa">Baixa</option>
+            <option value="normal">Normal</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
+          </select>
+        </div>
+        <div className="admin-field">
+          <label className="admin-label">Prazo desejado</label>
+          <input name="prazo_resolucao" type="date" className="admin-input" min={minDate} />
+        </div>
+      </div>
       {state.error && <p className="text-xs" style={{ color: "#f87171", fontFamily: "var(--font-inter), sans-serif" }}>{state.error}</p>}
       <button type="submit" disabled={pending} className="btn-primary justify-center" style={{ opacity: pending ? 0.7 : 1, fontSize: "14px" }}>
         {pending ? "Enviando..." : "Abrir chamado"}

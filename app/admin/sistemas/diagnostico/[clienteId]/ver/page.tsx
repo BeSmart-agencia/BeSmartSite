@@ -1,6 +1,7 @@
 import { supabase } from "@/app/lib/supabase";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { PrintButton } from "./PrintButton";
 
 type Props = { params: Promise<{ clienteId: string }> };
 
@@ -23,10 +24,10 @@ function Campo({ label, valor }: { label: string; valor: string | string[] | boo
 
   return (
     <div className="grid grid-cols-[140px_1fr] gap-3 text-sm">
-      <span className="text-xs uppercase tracking-wider font-semibold pt-0.5 leading-tight" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
+      <span className="diag-label text-xs uppercase tracking-wider font-semibold pt-0.5 leading-tight" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
         {label}
       </span>
-      <span className="leading-relaxed" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
+      <span className="diag-value leading-relaxed" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
         {display}
       </span>
     </div>
@@ -79,7 +80,7 @@ export default async function VerDiagnosticoPage({ params }: Props) {
         <div>
           <Link
             href={`/admin/sistemas/clientes/${clienteId}`}
-            className="inline-flex items-center gap-2 text-sm mb-3 transition-colors hover:text-white"
+            className="no-print inline-flex items-center gap-2 text-sm mb-3 transition-colors hover:text-white"
             style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}
           >
             <ArrowLeftIcon />
@@ -87,35 +88,38 @@ export default async function VerDiagnosticoPage({ params }: Props) {
           </Link>
           <p className="section-label mb-1">Diagnóstico</p>
           <h1
-            className="text-2xl font-bold text-white"
+            className="text-2xl font-bold text-white diag-title"
             style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
           >
             {cliente.empresa}
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
+          <p className="text-sm mt-0.5 diag-subtitle" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
             {cliente.nome}
           </p>
         </div>
-        <Link
-          href={`/admin/sistemas/diagnostico/${clienteId}`}
-          className="btn-secondary flex-shrink-0"
-          style={{ fontSize: "13px", padding: "8px 16px" }}
-        >
-          <EditIcon />
-          Editar
-        </Link>
+        <div className="flex gap-2 no-print">
+          <PrintButton />
+          <Link
+            href={`/admin/sistemas/diagnostico/${clienteId}`}
+            className="btn-secondary flex-shrink-0"
+            style={{ fontSize: "13px", padding: "8px 16px" }}
+          >
+            <EditIcon />
+            Editar
+          </Link>
+        </div>
       </div>
 
       {/* Principal dor em destaque */}
       {d.resolver_uma_coisa && (
         <div
-          className="rounded-2xl p-5 mb-5"
+          className="rounded-2xl p-5 mb-5 diag-dor"
           style={{ background: "rgba(155,107,181,0.08)", border: "1px solid rgba(155,107,181,0.2)" }}
         >
           <p className="text-xs uppercase tracking-wider font-semibold mb-2" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>
             Principal dor
           </p>
-          <p className="text-base italic leading-relaxed text-white" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+          <p className="text-base italic leading-relaxed text-white diag-dor-text" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
             &ldquo;{d.resolver_uma_coisa}&rdquo;
           </p>
         </div>
@@ -186,7 +190,7 @@ export default async function VerDiagnosticoPage({ params }: Props) {
 
       </div>
 
-      <div className="flex gap-3 mt-6 pb-6">
+      <div className="no-print flex gap-3 mt-6 pb-6">
         <Link
           href={`/admin/sistemas/diagnostico/${clienteId}`}
           className="btn-secondary flex-1 justify-center text-center"
