@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { salvarDiagnostico } from "@/app/admin/sistemas/actions";
 import Link from "next/link";
 
@@ -105,12 +106,19 @@ function Select({ name, options, initial }: { name: string; options: string[]; i
 type State = { error?: string; success?: boolean };
 
 export function DiagnosticoForm({ clienteId, initial: d }: Props) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<State, FormData>(
     async (_prev, formData) => {
       return await salvarDiagnostico(clienteId, formData);
     },
     {}
   );
+
+  useEffect(() => {
+    if (state.success) {
+      router.push(`/admin/sistemas/diagnostico/${clienteId}/ver`);
+    }
+  }, [state.success, clienteId, router]);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">

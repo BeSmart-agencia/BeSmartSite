@@ -62,7 +62,7 @@ export default async function ClientePerfilPage({ params }: Props) {
 
           <div className="flex flex-wrap gap-2">
             <Link
-              href={`/admin/sistemas/diagnostico/${clienteId}`}
+              href={diagnostico ? `/admin/sistemas/diagnostico/${clienteId}/ver` : `/admin/sistemas/diagnostico/${clienteId}`}
               className="btn-secondary"
               style={{ fontSize: "13px", padding: "8px 16px" }}
             >
