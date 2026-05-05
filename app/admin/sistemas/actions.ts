@@ -233,3 +233,106 @@ export async function marcarParcelaPaga(parcelaId: string) {
   if (error) return { error: error.message };
   return { success: true };
 }
+
+// ── Clientes (edição) ─────────────────────────────────────────────────────────
+
+export async function editarCliente(clienteId: string, formData: FormData) {
+  const nome = formData.get("nome") as string;
+  const empresa = formData.get("empresa") as string;
+  if (!nome || !empresa) return { error: "Nome e empresa são obrigatórios." };
+
+  const { error } = await supabase.from("clientes").update({
+    nome,
+    empresa,
+    segmento: formData.get("segmento") || null,
+    whatsapp: formData.get("whatsapp") || null,
+    email: formData.get("email") || null,
+    como_conheceu: formData.get("como_conheceu") || null,
+    observacoes: formData.get("observacoes") || null,
+  }).eq("id", clienteId);
+
+  if (error) return { error: "Erro ao atualizar: " + error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}`);
+  return { success: true };
+}
+
+// ── Projeto — checklist de processo e infraestrutura ─────────────────────────
+
+const ALLOWED_PROJ_CAMPOS = new Set([
+  "proc_diagnostico", "proc_proposta_enviada", "proc_contrato_assinado",
+  "proc_entrada_recebida", "proc_entregue", "proc_onboarding", "proc_mensalidade_ativa",
+  "infra_supabase_criado", "infra_colaboradora_adicionada", "infra_github_repo",
+  "infra_vercel_deploy", "infra_dns_configurado", "infra_dominio_vercel",
+]);
+
+export async function toggleProjetoCheck(projetoId: string, campo: string, valor: boolean) {
+  if (!ALLOWED_PROJ_CAMPOS.has(campo)) return { error: "Campo não permitido." };
+  const { error } = await supabase.from("projetos").update({ [campo]: valor }).eq("id", projetoId);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function atualizarProposta(projetoId: string, formData: FormData, clienteId: string) {
+  const { error } = await supabase.from("projetos").update({
+    proposta_status: formData.get("proposta_status") || "nao_enviada",
+    proposta_enviada_em: formData.get("proposta_enviada_em") || null,
+    contrato_assinado_em: formData.get("contrato_assinado_em") || null,
+  }).eq("id", projetoId);
+
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}/projeto/${projetoId}`);
+  return { success: true };
+}
+
+export async function atualizarInfoProjeto(projetoId: string, formData: FormData, clienteId: string) {
+  const { error } = await supabase.from("projetos").update({
+    complexidade: formData.get("complexidade") || "medio",
+    plano_mensalidade: formData.get("plano_mensalidade") || "starter",
+    valor_mensalidade: formData.get("valor_mensalidade") ? Number(formData.get("valor_mensalidade")) : null,
+    prazo_mensalidade_meses: formData.get("prazo_mensalidade_meses") ? Number(formData.get("prazo_mensalidade_meses")) : 6,
+  }).eq("id", projetoId);
+
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}/projeto/${projetoId}`);
+  return { success: true };
+}
+
+// ── Mensalidades ──────────────────────────────────────────────────────────────
+
+export async function adicionarMensalidade(projetoId: string, formData: FormData) {
+  const valor = Number(formData.get("valor"));
+  const mes_referencia = formData.get("mes_referencia") as string;
+  if (!valor || !mes_referencia) return { error: "Valor e mês são obrigatórios." };
+
+  const { error } = await supabase.from("mensalidades").insert({
+    projeto_id: projetoId,
+    mes_referencia,
+    plano: formData.get("plano") || "starter",
+    valor,
+    status: "pendente",
+    data_vencimento: formData.get("data_vencimento") || null,
+    observacoes: formData.get("observacoes") || null,
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/sistemas/financeiro/mensalidades");
+  return { success: true };
+}
+
+export async function marcarMensalidadePaga(mensalidadeId: string) {
+  const { error } = await supabase.from("mensalidades")
+    .update({ status: "pago", data_pagamento: new Date().toISOString().split("T")[0] })
+    .eq("id", mensalidadeId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/sistemas/financeiro/mensalidades");
+  return { success: true };
+}
+
+export async function marcarMensalidadePendente(mensalidadeId: string) {
+  const { error } = await supabase.from("mensalidades")
+    .update({ status: "pendente", data_pagamento: null })
+    .eq("id", mensalidadeId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/sistemas/financeiro/mensalidades");
+  return { success: true };
+}

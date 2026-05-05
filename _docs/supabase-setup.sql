@@ -127,3 +127,66 @@ ALTER TABLE projetos DISABLE ROW LEVEL SECURITY;
 ALTER TABLE itens_escopo DISABLE ROW LEVEL SECURITY;
 ALTER TABLE etapas DISABLE ROW LEVEL SECURITY;
 ALTER TABLE parcelas DISABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- MIGRAÇÃO v2 — Processo, Infraestrutura, Chamados, Mensalidades
+-- Execute no SQL Editor do Supabase (após o schema inicial)
+-- ============================================================
+
+-- Novos campos em projetos — configuração do projeto
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS complexidade TEXT DEFAULT 'medio';
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS plano_mensalidade TEXT DEFAULT 'starter';
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS valor_mensalidade NUMERIC(10,2);
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS prazo_mensalidade_meses INT DEFAULT 6;
+
+-- Acompanhamento da proposta
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proposta_status TEXT DEFAULT 'nao_enviada';
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proposta_enviada_em DATE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS contrato_assinado_em DATE;
+
+-- Checklist do processo (7 etapas)
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proc_diagnostico BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proc_proposta_enviada BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proc_contrato_assinado BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proc_entrada_recebida BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proc_entregue BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proc_onboarding BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS proc_mensalidade_ativa BOOLEAN DEFAULT FALSE;
+
+-- Checklist de infraestrutura (6 itens)
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS infra_supabase_criado BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS infra_colaboradora_adicionada BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS infra_github_repo BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS infra_vercel_deploy BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS infra_dns_configurado BOOLEAN DEFAULT FALSE;
+ALTER TABLE projetos ADD COLUMN IF NOT EXISTS infra_dominio_vercel BOOLEAN DEFAULT FALSE;
+
+-- 7. Chamados (estava no código mas faltava no schema)
+CREATE TABLE IF NOT EXISTS chamados (
+  id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  cliente_id      UUID REFERENCES clientes(id) ON DELETE CASCADE,
+  projeto_id      UUID REFERENCES projetos(id) ON DELETE SET NULL,
+  titulo          TEXT NOT NULL,
+  descricao       TEXT,
+  status          TEXT DEFAULT 'aberto',
+  urgencia        TEXT DEFAULT 'normal',
+  prazo_resolucao DATE,
+  resposta        TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE chamados DISABLE ROW LEVEL SECURITY;
+
+-- 8. Mensalidades de suporte
+CREATE TABLE IF NOT EXISTS mensalidades (
+  id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  projeto_id      UUID REFERENCES projetos(id) ON DELETE CASCADE,
+  mes_referencia  TEXT NOT NULL,
+  plano           TEXT DEFAULT 'starter',
+  valor           NUMERIC(10,2) NOT NULL,
+  status          TEXT DEFAULT 'pendente',
+  data_vencimento DATE,
+  data_pagamento  DATE,
+  observacoes     TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE mensalidades DISABLE ROW LEVEL SECURITY;
