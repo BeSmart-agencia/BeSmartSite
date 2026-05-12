@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import { abrirChamado } from "@/app/admin/sistemas/actions";
+import { abrirChamado, responderPropostaCliente } from "@/app/admin/sistemas/actions";
 import { useRouter } from "next/navigation";
 
 type PropostaConteudo = {
@@ -16,7 +16,7 @@ type PropostaConteudo = {
   proximos_passos?: string[];
 };
 
-type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null; forma_pagamento: string | null; proposta_conteudo: PropostaConteudo | null };
+type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null; forma_pagamento: string | null; proposta_conteudo: PropostaConteudo | null; proposta_status: string | null };
 type Diagnostico = { resolver_uma_coisa: string | null; impacto_resolucao: string | null } | null;
 type Etapa = { id: string; projeto_id: string; nome: string; status: string; prazo: string | null; ordem: number };
 type Item = { id: string; projeto_id: string; descricao: string; concluido: boolean };
@@ -112,13 +112,94 @@ function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: s
   );
 }
 
+// ── Resposta à proposta ───────────────────────────────────────────────────────
+
+type RespostaState = { error?: string; success?: boolean; acao?: "aprovar" | "recusar" };
+
+function RespostaProposta({ projetoId }: { projetoId: string }) {
+  const router = useRouter();
+  const [confirmando, setConfirmando] = useState<"aprovar" | "recusar" | null>(null);
+
+  const [state, formAction, pending] = useActionState<RespostaState, FormData>(
+    async (_prev, fd) => {
+      const acao = fd.get("acao") as "aprovar" | "recusar";
+      const result = await responderPropostaCliente(projetoId, acao);
+      if (result?.error) return { error: result.error };
+      router.refresh();
+      return { success: true, acao };
+    },
+    {}
+  );
+
+  if (state.success && state.acao === "aprovar") {
+    return (
+      <div className="rounded-2xl p-6 text-center mt-4" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <p className="font-bold text-white mb-1" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>Proposta aceita!</p>
+        <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Entraremos em contato em breve para dar início ao projeto.</p>
+      </div>
+    );
+  }
+
+  if (state.success && state.acao === "recusar") {
+    return (
+      <div className="rounded-2xl p-6 text-center mt-4" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
+        <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Entendemos. Se mudar de ideia ou quiser conversar, estamos à disposição.</p>
+      </div>
+    );
+  }
+
+  if (confirmando === "recusar") {
+    return (
+      <div className="rounded-2xl p-5 mt-4 flex flex-col gap-3 text-center" style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)" }}>
+        <p className="text-sm font-semibold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>Tem certeza que deseja recusar esta proposta?</p>
+        <div className="flex gap-3 justify-center">
+          <form action={formAction}>
+            <input type="hidden" name="acao" value="recusar" />
+            <button type="submit" disabled={pending} className="text-sm px-4 py-2 rounded-xl" style={{ background: "rgba(248,113,113,0.12)", color: "#F87171", border: "1px solid rgba(248,113,113,0.25)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+              Sim, recusar
+            </button>
+          </form>
+          <button type="button" onClick={() => setConfirmando(null)} className="text-sm px-4 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", color: "#9CA3AF", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+            Voltar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 mt-6 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+      {state.error && <p className="text-xs text-center" style={{ color: "#F87171", fontFamily: "var(--font-inter), sans-serif" }}>{state.error}</p>}
+      <form action={formAction} className="flex flex-col gap-2">
+        <input type="hidden" name="acao" value="aprovar" />
+        <button type="submit" disabled={pending} className="btn-primary justify-center w-full" style={{ fontSize: "15px", padding: "14px", opacity: pending ? 0.7 : 1 }}>
+          {pending ? "Processando..." : "Aceitar proposta"}
+        </button>
+      </form>
+      <button type="button" onClick={() => setConfirmando("recusar")} className="text-xs text-center py-2" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif", background: "none", border: "none", cursor: "pointer" }}>
+        Recusar proposta
+      </button>
+    </div>
+  );
+}
+
+// ── Portal principal ──────────────────────────────────────────────────────────
+
 type Aba = "projeto" | "proposta" | "chamados";
+
+const APROVADOS = ["Aprovado", "Em desenvolvimento", "Entregue"];
 
 export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico }: Props) {
   const [projetoAtivo, setProjetoAtivo] = useState<string | null>(projetos[0]?.id ?? null);
-  const [abaAtiva, setAbaAtiva] = useState<Aba>("projeto");
   const projeto = projetos.find((p) => p.id === projetoAtivo) ?? null;
+
+  const propostaAprovada = APROVADOS.includes(projeto?.status ?? "") || projeto?.proposta_status === "aprovada";
   const temProposta = !!(projeto?.proposta_conteudo);
+  const propostaPendente = temProposta && !propostaAprovada && projeto?.proposta_status !== "recusada";
+
+  const defaultAba: Aba = propostaPendente ? "proposta" : propostaAprovada ? "projeto" : temProposta ? "proposta" : "projeto";
+  const [abaAtiva, setAbaAtiva] = useState<Aba>(defaultAba);
 
   const projetoEtapas = etapas.filter((e) => e.projeto_id === projetoAtivo);
   const projetoItens = itens.filter((i) => i.projeto_id === projetoAtivo);
@@ -167,12 +248,17 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
 
       {/* Tabs */}
       <div className="admin-tabs">
-        <button type="button" onClick={() => setAbaAtiva("projeto")} className={`admin-tab ${abaAtiva === "projeto" ? "active" : ""}`}>
-          Meu Projeto
-        </button>
         {temProposta && (
           <button type="button" onClick={() => setAbaAtiva("proposta")} className={`admin-tab ${abaAtiva === "proposta" ? "active" : ""}`}>
             Proposta
+            {propostaPendente && (
+              <span className="ml-1.5 inline-flex items-center justify-center w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#FCD34D" }} />
+            )}
+          </button>
+        )}
+        {propostaAprovada && (
+          <button type="button" onClick={() => setAbaAtiva("projeto")} className={`admin-tab ${abaAtiva === "projeto" ? "active" : ""}`}>
+            Meu Projeto
           </button>
         )}
         <button type="button" onClick={() => setAbaAtiva("chamados")} className={`admin-tab ${abaAtiva === "chamados" ? "active" : ""}`}>
@@ -530,6 +616,20 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
                 </p>
               )}
             </div>
+          )}
+
+          {/* Resposta à proposta ou badge de aceita */}
+          {propostaAprovada ? (
+            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <p className="text-sm font-semibold" style={{ color: "#4ADE80", fontFamily: "var(--font-inter), sans-serif" }}>Proposta aceita</p>
+            </div>
+          ) : projeto.proposta_status === "recusada" ? (
+            <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
+              <p className="text-sm" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>Proposta recusada. Entre em contato se quiser conversar.</p>
+            </div>
+          ) : (
+            <RespostaProposta projetoId={projeto.id} />
           )}
         </div>
       )}

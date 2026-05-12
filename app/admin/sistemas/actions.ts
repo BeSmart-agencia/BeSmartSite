@@ -343,6 +343,16 @@ export async function salvarPropostaConteudo(projetoId: string, conteudo: unknow
   const { error } = await supabase.from("projetos").update({ proposta_conteudo: conteudo }).eq("id", projetoId);
   if (error) return { error: error.message };
   revalidatePath(`/admin/sistemas/clientes/${clienteId}/projeto/${projetoId}`);
-  revalidatePath(`/portal`);
+  return { success: true };
+}
+
+export async function responderPropostaCliente(projetoId: string, resposta: "aprovar" | "recusar") {
+  const updates =
+    resposta === "aprovar"
+      ? { proposta_status: "aprovada", status: "Aprovado" }
+      : { proposta_status: "recusada" };
+
+  const { error } = await supabase.from("projetos").update(updates).eq("id", projetoId);
+  if (error) return { error: error.message };
   return { success: true };
 }

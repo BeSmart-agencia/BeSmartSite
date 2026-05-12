@@ -25,7 +25,7 @@ export default async function PortalPage({ params }: Props) {
   const [{ data: projetos }, { data: diagnostico }, { data: chamadosAbertos }] = await Promise.all([
     supabase
       .from("projetos")
-      .select("id, nome, descricao, status, data_inicio, prazo_entrega, valor_total, forma_pagamento, proposta_conteudo")
+      .select("id, nome, descricao, status, data_inicio, prazo_entrega, valor_total, forma_pagamento, proposta_conteudo, proposta_status")
       .eq("cliente_id", cliente.id)
       .order("created_at", { ascending: false }),
     supabase
