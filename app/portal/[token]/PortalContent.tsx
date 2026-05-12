@@ -5,14 +5,21 @@ import { abrirChamado, aceitarPropostaPortal, recusarPropostaPortal } from "@/ap
 import { useRouter } from "next/navigation";
 
 type PropostaConteudo = {
-  nome_sistema?: string; tagline?: string; validade_dias?: number;
-  contexto?: Record<string, string>;
+  nome_sistema?: string; tagline?: string; tagline_final?: string; validade_dias?: number; data_emissao?: string;
+  contexto_intro?: string;
+  contexto?: Record<string, string> | Array<{ label: string; valor: string }>;
+  necessidades_titulo?: string;
   dores?: string[];
+  solucao_descricao?: string;
   modulos?: Array<{ titulo: string; itens: string[] }>;
+  como_funciona?: Array<{ passo: string; descricao: string }>;
+  diferenciais?: string[];
   plano_recomendado?: "A" | "B";
   plano_a?: { valor?: number; extra_info?: string; beneficios?: string[] };
   plano_b?: { start?: number; mensalidade?: number; limite?: string; beneficios?: string[] };
+  plano_recomendacao_texto?: string;
   cronograma?: Array<{ periodo: string; descricao: string }>;
+  condicoes_pagamento?: Array<{ item: string; descricao: string }>;
   proximos_passos?: string[];
 };
 
@@ -459,190 +466,234 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
       )}
 
       {/* Aba Proposta */}
-      {abaAtiva === "proposta" && propostaConteudo && (
-        <div className="flex flex-col gap-5">
-          {/* Header */}
-          <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, rgba(155,107,181,0.12), rgba(46,155,175,0.10))", border: "1px solid rgba(155,107,181,0.25)" }}>
-            <h2 className="text-3xl font-bold mb-1" style={{ color: "#9B6BB5", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-              {(propostaConteudo.nome_sistema as string) || cliente.empresa}
-            </h2>
-            {propostaConteudo.tagline && (
-              <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>{propostaConteudo.tagline as string}</p>
-            )}
-            <div className="mt-4 rounded-xl px-5 py-3 inline-block" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>Proposta elaborada para</p>
-              <p className="font-bold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>{((propostaConteudo.contexto as Record<string, string>)?.empresa) || cliente.empresa}</p>
-            </div>
-            {(propostaConteudo.validade_dias as number ?? 0) > 0 && (
-              <p className="text-xs mt-3" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
-                Validade: {propostaConteudo.validade_dias as number} dias
-              </p>
-            )}
-          </div>
+      {abaAtiva === "proposta" && propostaConteudo && (() => {
+        const pc = propostaConteudo;
+        const F = "var(--font-inter), sans-serif";
+        const P = "var(--font-playfair), Georgia, serif";
 
-          {/* Contexto */}
-          {propostaConteudo.contexto && Object.values(propostaConteudo.contexto as Record<string, string>).some(Boolean) && (
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Contexto e Diagnóstico</p>
-              {(() => {
-                const ctx = propostaConteudo.contexto as Record<string, string>;
-                const labels: Record<string, string> = {
-                  empresa: "Empresa", segmento: "Segmento", tempo_mercado: "Tempo de mercado",
-                  estrutura: "Estrutura", canais_venda: "Canais de venda",
-                  como_chegam_leads: "Como chegam leads", quem_atende: "Quem atende",
-                  controle_atual: "Controle atual", retrabalho: "Retrabalho",
-                };
-                return (
-                  <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
-                    {Object.entries(labels).map(([key, label], i) => {
-                      const val = ctx[key];
-                      if (!val) return null;
-                      return (
-                        <div key={key} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
-                          <span className="text-xs font-semibold flex-shrink-0 w-40" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>{label}</span>
-                          <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>{val}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-              {((propostaConteudo.dores as string[]) ?? []).length > 0 && (
-                <div className="mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Principais dores identificadas</p>
-                  <ul className="flex flex-col gap-2">
-                    {(propostaConteudo.dores as string[]).map((d, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
-                        <span style={{ color: "#9B6BB5", flexShrink: 0 }}>•</span>{d}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+        // contexto: novo formato (array) ou legado (Record)
+        let ctxRows: Array<{ label: string; valor: string }> = [];
+        if (Array.isArray(pc.contexto)) {
+          ctxRows = pc.contexto as Array<{ label: string; valor: string }>;
+        } else if (pc.contexto && typeof pc.contexto === "object") {
+          const legacy = pc.contexto as Record<string, string>;
+          const map: Record<string, string> = { empresa: "Empresa", segmento: "Segmento", tempo_mercado: "Tempo de mercado", estrutura: "Estrutura", canais_venda: "Canais de venda", como_chegam_leads: "Como chegam leads", quem_atende: "Quem atende", controle_atual: "Controle atual", retrabalho: "Retrabalho" };
+          ctxRows = Object.entries(map).filter(([k]) => legacy[k]).map(([k, label]) => ({ label, valor: legacy[k] }));
+        }
 
-          {/* Módulos */}
-          {((propostaConteudo.modulos as Array<{ titulo: string; itens: string[] }>) ?? []).length > 0 && (
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>A Solução</p>
-              <div className="flex flex-col gap-3">
-                {(propostaConteudo.modulos as Array<{ titulo: string; itens: string[] }>).map((m, i) => (
-                  <div key={i} className="rounded-xl p-4" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.15)" }}>
-                    <p className="text-sm font-bold mb-2" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>{m.titulo}</p>
-                    <ul className="flex flex-col gap-1">
-                      {m.itens.map((item, j) => (
-                        <li key={j} className="flex items-start gap-2 text-xs" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
-                          <span className="flex-shrink-0" style={{ color: "#9B6BB5" }}>—</span>{item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+        const dores = (pc.dores as string[]) ?? [];
+        const modulos = (pc.modulos as Array<{ titulo: string; itens: string[] }>) ?? [];
+        const comoFunciona = (pc.como_funciona as Array<{ passo: string; descricao: string }>) ?? [];
+        const diferenciais = (pc.diferenciais as string[]) ?? [];
+        const cronograma = (pc.cronograma as Array<{ periodo: string; descricao: string }>) ?? [];
+        const condicoes = (pc.condicoes_pagamento as Array<{ item: string; descricao: string }>) ?? [];
+        const proximos = (pc.proximos_passos as string[]) ?? [];
+        const pa = pc.plano_a as { valor?: number; extra_info?: string; beneficios?: string[] } | null;
+        const pb = pc.plano_b as { start?: number; mensalidade?: number; limite?: string; beneficios?: string[] } | null;
+        const rec = pc.plano_recomendado as string;
+
+        return (
+          <div className="flex flex-col gap-5">
+            {/* Capa */}
+            <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, rgba(155,107,181,0.12), rgba(46,155,175,0.10))", border: "1px solid rgba(155,107,181,0.25)" }}>
+              <h2 className="text-3xl font-bold mb-1" style={{ color: "#9B6BB5", fontFamily: P }}>{(pc.nome_sistema as string) || cliente.empresa}</h2>
+              {pc.tagline && <p className="text-sm mb-4" style={{ color: "#9CA3AF", fontFamily: F }}>{pc.tagline as string}</p>}
+              <div className="rounded-xl px-5 py-3 inline-block mb-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7280", fontFamily: F }}>Proposta elaborada para</p>
+                <p className="font-bold text-white" style={{ fontFamily: F }}>{cliente.nome || cliente.empresa}</p>
+              </div>
+              <div className="flex justify-center gap-4">
+                {pc.data_emissao && <p className="text-xs" style={{ color: "#4B5563", fontFamily: F }}>Emissão: {pc.data_emissao as string}</p>}
+                {(pc.validade_dias as number) > 0 && <p className="text-xs" style={{ color: "#4B5563", fontFamily: F }}>Validade: {pc.validade_dias as number} dias</p>}
               </div>
             </div>
-          )}
 
-          {/* Planos */}
-          {(() => {
-            const pa = propostaConteudo.plano_a as { valor?: number; extra_info?: string; beneficios?: string[] } | null;
-            const pb = propostaConteudo.plano_b as { start?: number; mensalidade?: number; limite?: string; beneficios?: string[] } | null;
-            const rec = propostaConteudo.plano_recomendado as string;
-            if (!pa?.valor && !pb?.start) return null;
-            return (
+            {/* 1. Contexto */}
+            {(pc.contexto_intro || ctxRows.length > 0) && (
               <div className="glass rounded-2xl p-5">
-                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Planos e Valores</p>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: F }}>1. Contexto e Diagnóstico</p>
+                {pc.contexto_intro && <p className="text-sm leading-relaxed mb-4" style={{ color: "#D1D5DB", fontFamily: F }}>{pc.contexto_intro as string}</p>}
+                {ctxRows.length > 0 && (
+                  <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
+                    {ctxRows.map((row, i) => (
+                      <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < ctxRows.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                        <span className="text-xs font-semibold flex-shrink-0 w-44" style={{ color: "#9CA3AF", fontFamily: F }}>{row.label}</span>
+                        <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.valor}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 1.1 Necessidades */}
+            {dores.length > 0 && (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: F }}>1.1 {(pc.necessidades_titulo as string) || "Principais Necessidades Identificadas"}</p>
+                <ul className="flex flex-col gap-2">
+                  {dores.map((d, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "#D1D5DB", fontFamily: F }}>
+                      <span style={{ color: "#9B6BB5", flexShrink: 0 }}>•</span>{d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 2. A Solução */}
+            {(pc.solucao_descricao || modulos.length > 0) && (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: F }}>2. A Solução</p>
+                {pc.solucao_descricao && <p className="text-sm leading-relaxed mb-4" style={{ color: "#D1D5DB", fontFamily: F }}>{pc.solucao_descricao as string}</p>}
+                {modulos.filter(m => m.titulo).length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    {modulos.filter(m => m.titulo).map((m, i) => (
+                      <div key={i} className="rounded-xl p-4" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.15)" }}>
+                        <p className="text-sm font-bold mb-2" style={{ color: "#9B6BB5", fontFamily: F }}>{m.titulo}</p>
+                        <ul className="flex flex-col gap-1">
+                          {m.itens.map((item, j) => (
+                            <li key={j} className="flex items-start gap-2 text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>
+                              <span style={{ color: "#9B6BB5", flexShrink: 0 }}>—</span>{item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. Como funciona */}
+            {comoFunciona.length > 0 && (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: F }}>3. Como funciona na prática</p>
+                <div className="flex flex-col gap-3">
+                  {comoFunciona.map((s, i) => (
+                    <div key={i} className="flex gap-4 items-start">
+                      <div className="w-20 flex-shrink-0 text-xs font-bold pt-0.5" style={{ color: "#2E9BAF", fontFamily: F }}>{s.passo}</div>
+                      <p className="text-sm flex-1" style={{ color: "#D1D5DB", fontFamily: F }}>{s.descricao}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 4. Diferenciais */}
+            {diferenciais.length > 0 && (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: F }}>4. Diferenciais</p>
+                <ul className="flex flex-col gap-3">
+                  {diferenciais.map((d, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "#D1D5DB", fontFamily: F }}>
+                      <span style={{ color: "#9B6BB5", flexShrink: 0, marginTop: 2 }}>•</span>
+                      <span dangerouslySetInnerHTML={{ __html: d.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 5. Planos */}
+            {(pa?.valor || pb?.start) && (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: F }}>5. Planos e Valores</p>
+                <div className="grid sm:grid-cols-2 gap-4 mb-4">
                   {pa && (
                     <div className="rounded-xl p-4" style={{ background: rec === "A" ? "rgba(155,107,181,0.10)" : "rgba(255,255,255,0.03)", border: rec === "A" ? "1px solid rgba(155,107,181,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
-                      <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Plano A — Exclusivo</p>
-                      {pa.valor ? <p className="text-2xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>R$ {pa.valor.toLocaleString("pt-BR")}</p> : null}
-                      {pa.extra_info && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{pa.extra_info}</p>}
-                      <ul className="flex flex-col gap-1">
-                        {(pa.beneficios ?? []).map((b, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9B6BB5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
-                          </li>
-                        ))}
-                      </ul>
+                      <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "#9CA3AF", fontFamily: F }}>Plano A — Exclusivo</p>
+                      {pa.valor ? <p className="text-2xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: P }}>R$ {pa.valor.toLocaleString("pt-BR")}</p> : null}
+                      {pa.extra_info && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: F }}>{pa.extra_info}</p>}
+                      <ul className="flex flex-col gap-1">{(pa.beneficios ?? []).map((b, i) => (<li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: F }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9B6BB5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}</li>))}</ul>
                     </div>
                   )}
                   {pb && (
                     <div className="rounded-xl p-4" style={{ background: rec === "B" ? "rgba(46,155,175,0.08)" : "rgba(255,255,255,0.03)", border: rec === "B" ? "1px solid rgba(46,155,175,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
                       <div className="flex items-center gap-2 mb-2">
-                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>Plano B — Mensalidade</p>
-                        {rec === "B" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>★ Recomendado</span>}
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: F }}>Plano B — Mensalidade</p>
+                        {rec === "B" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: F }}>★ Recomendado</span>}
                       </div>
-                      {(pb.start || pb.mensalidade) ? (
-                        <p className="text-xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                          Start: R$ {(pb.start ?? 0).toLocaleString("pt-BR")} + R$ {(pb.mensalidade ?? 0).toLocaleString("pt-BR")}/mês
-                        </p>
-                      ) : null}
-                      {pb.limite && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{pb.limite}</p>}
-                      <ul className="flex flex-col gap-1">
-                        {(pb.beneficios ?? []).map((b, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9BAF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
-                          </li>
-                        ))}
-                      </ul>
+                      {(pb.start || pb.mensalidade) && <p className="text-xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: P }}>Start: R$ {(pb.start ?? 0).toLocaleString("pt-BR")} + R$ {(pb.mensalidade ?? 0).toLocaleString("pt-BR")}/mês</p>}
+                      {pb.limite && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: F }}>{pb.limite}</p>}
+                      <ul className="flex flex-col gap-1">{(pb.beneficios ?? []).map((b, i) => (<li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: F }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9BAF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}</li>))}</ul>
                     </div>
                   )}
                 </div>
+                {pc.plano_recomendacao_texto && (
+                  <p className="text-sm leading-relaxed italic" style={{ color: "#9CA3AF", fontFamily: F, borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "12px" }}>{pc.plano_recomendacao_texto as string}</p>
+                )}
               </div>
-            );
-          })()}
+            )}
 
-          {/* Cronograma */}
-          {((propostaConteudo.cronograma as Array<{ periodo: string; descricao: string }>) ?? []).length > 0 && (
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>Cronograma</p>
-              <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
-                {(propostaConteudo.cronograma as Array<{ periodo: string; descricao: string }>).map((row, i, arr) => (
-                  <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
-                    <span className="text-xs font-semibold flex-shrink-0 w-28" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>{row.periodo}</span>
-                    <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>{row.descricao}</span>
-                  </div>
-                ))}
+            {/* 6. Cronograma */}
+            {cronograma.length > 0 && (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: F }}>6. Cronograma de Desenvolvimento</p>
+                <div className="flex flex-col gap-0 mb-5" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
+                  {cronograma.map((row, i) => (
+                    <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < cronograma.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                      <span className="text-xs font-semibold flex-shrink-0 w-32" style={{ color: "#2E9BAF", fontFamily: F }}>{row.periodo}</span>
+                      <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
+                    </div>
+                  ))}
+                </div>
+                {condicoes.length > 0 && (
+                  <>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#2E9BAF", fontFamily: F }}>6.1 Condições de Pagamento</p>
+                    <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
+                      {condicoes.map((row, i) => (
+                        <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < condicoes.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                          <span className="text-xs font-semibold flex-shrink-0 w-44" style={{ color: "#9CA3AF", fontFamily: F }}>{row.item}</span>
+                          <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Próximos passos */}
-          {((propostaConteudo.proximos_passos as string[]) ?? []).length > 0 && (
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Próximos Passos</p>
-              <ol className="flex flex-col gap-2">
-                {(propostaConteudo.proximos_passos as string[]).map((p, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
-                    <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5" style={{ background: "rgba(155,107,181,0.15)", color: "#9B6BB5" }}>{i + 1}</span>
-                    {p}
-                  </li>
-                ))}
-              </ol>
-              {(propostaConteudo.validade_dias as number ?? 0) > 0 && (
-                <p className="text-xs mt-5 text-center" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
-                  Esta proposta tem validade de {propostaConteudo.validade_dias as number} dias.
-                </p>
-              )}
-            </div>
-          )}
+            {/* 7. Próximos passos */}
+            {proximos.length > 0 && (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: F }}>7. Próximos Passos</p>
+                <ol className="flex flex-col gap-2">
+                  {proximos.map((p, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#D1D5DB", fontFamily: F }}>
+                      <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5" style={{ background: "rgba(155,107,181,0.15)", color: "#9B6BB5" }}>{i + 1}</span>{p}
+                    </li>
+                  ))}
+                </ol>
+                {(pc.validade_dias as number) > 0 && (
+                  <p className="text-xs mt-5 text-center" style={{ color: "#4B5563", fontFamily: F }}>Esta proposta tem validade de {pc.validade_dias as number} dias.</p>
+                )}
+              </div>
+            )}
 
-          {/* Resposta */}
-          {propostaAprovada ? (
-            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <p className="text-sm font-semibold" style={{ color: "#4ADE80", fontFamily: "var(--font-inter), sans-serif" }}>Proposta aceita</p>
-            </div>
-          ) : propostaStatus === "recusada" ? (
-            <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
-              <p className="text-sm" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>Proposta recusada. Entre em contato se quiser conversar.</p>
-            </div>
-          ) : (
-            <RespostaProposta clienteId={cliente.id} />
-          )}
-        </div>
-      )}
+            {/* Closing */}
+            {pc.tagline_final && (
+              <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, rgba(155,107,181,0.08), rgba(46,155,175,0.06))", border: "1px solid rgba(155,107,181,0.15)" }}>
+                <p className="text-xl font-bold mb-1" style={{ color: "#9B6BB5", fontFamily: P }}>{pc.nome_sistema as string}</p>
+                <p className="text-sm italic" style={{ color: "#6B7280", fontFamily: F }}>{pc.tagline_final as string}</p>
+              </div>
+            )}
+
+            {/* Resposta */}
+            {propostaAprovada ? (
+              <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <p className="text-sm font-semibold" style={{ color: "#4ADE80", fontFamily: F }}>Proposta aceita</p>
+              </div>
+            ) : propostaStatus === "recusada" ? (
+              <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
+                <p className="text-sm" style={{ color: "#6B7280", fontFamily: F }}>Proposta recusada. Entre em contato se quiser conversar.</p>
+              </div>
+            ) : (
+              <RespostaProposta clienteId={cliente.id} />
+            )}
+          </div>
+        );
+      })()}
 
       {/* Aba Suporte */}
       {abaAtiva === "chamados" && (

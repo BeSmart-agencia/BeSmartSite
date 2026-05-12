@@ -149,6 +149,7 @@ export default async function ClientePerfilPage({ params }: Props) {
       <PropostaCliente
         clienteId={clienteId}
         empresaNome={cliente.empresa}
+        clienteNome={cliente.nome}
         segmento={cliente.segmento ?? ""}
         propostaConteudo={cliente.proposta_conteudo ?? null}
         propostaStatus={cliente.proposta_status ?? null}
