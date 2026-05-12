@@ -476,6 +476,7 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
     await salvarPropostaStatusCliente(clienteId, localStatus);
     setSaving(false);
     setSaved(true);
+    setModo("visualizar");
     setTimeout(() => setSaved(false), 2500);
     router.refresh();
   }
