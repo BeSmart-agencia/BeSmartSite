@@ -150,18 +150,11 @@ export default async function ClientePerfilPage({ params }: Props) {
         clienteId={clienteId}
         empresaNome={cliente.empresa}
         clienteNome={cliente.nome}
+        clienteContato={cliente.whatsapp ?? cliente.email ?? ""}
         segmento={cliente.segmento ?? ""}
         propostaConteudo={cliente.proposta_conteudo ?? null}
         propostaStatus={cliente.proposta_status ?? null}
-        diagnosticoContexto={diagnostico ? {
-          tempo_mercado: diagnostico.tempo_mercado ?? "",
-          num_funcionarios: diagnostico.num_funcionarios ?? "",
-          canais_venda: Array.isArray(diagnostico.canais_venda) ? diagnostico.canais_venda.join(", ") : (diagnostico.canais_venda ?? ""),
-          como_chegam_leads: Array.isArray(diagnostico.como_chegam_leads) ? diagnostico.como_chegam_leads.join(", ") : (diagnostico.como_chegam_leads ?? ""),
-          quem_responde_leads: diagnostico.quem_responde_leads ?? "",
-          ferramentas_atuais: diagnostico.ferramentas_atuais ?? "",
-          onde_retrabalho: diagnostico.onde_retrabalho ?? "",
-        } : null}
+        diagnosticoContexto={null}
       />
 
       {/* Projetos */}

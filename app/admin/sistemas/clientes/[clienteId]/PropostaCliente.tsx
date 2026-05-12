@@ -46,14 +46,9 @@ type FormProposta = {
 };
 
 const DEFAULT_CTX_ROWS = [
-  { label: "Profissional", valor: "" },
-  { label: "Área de atuação", valor: "" },
-  { label: "Público atendido", valor: "" },
-  { label: "Modelo de trabalho", valor: "" },
-  { label: "Canais atuais", valor: "" },
-  { label: "Materiais utilizados", valor: "" },
-  { label: "Controle atual", valor: "" },
-  { label: "Comunicação", valor: "" },
+  { label: "Cliente", valor: "" },
+  { label: "Contato", valor: "" },
+  { label: "Data da proposta", valor: "" },
 ];
 
 const DEFAULT_FORM: FormProposta = {
@@ -389,29 +384,15 @@ function PropostaPreview({ c, empresaNome, clienteNome }: { c: PropostaConteudo;
   );
 }
 
-// ── Helpers diagnóstico ────────────────────────────────────────────────────────
-
-type DiagnosticoContexto = {
-  tempo_mercado: string; num_funcionarios: string;
-  canais_venda: string; como_chegam_leads: string;
-  quem_responde_leads: string; ferramentas_atuais: string;
-  onde_retrabalho: string;
-};
-
-function ctxFromDiag(clienteNome: string, segmento: string, d: DiagnosticoContexto | null): Partial<FormProposta> {
-  const fill = (base: typeof DEFAULT_CTX_ROWS) =>
-    base.map((row) => {
-      switch (row.label) {
-        case "Profissional": return { ...row, valor: clienteNome || row.valor };
-        case "Área de atuação": return { ...row, valor: segmento || row.valor };
-        case "Canais atuais": return { ...row, valor: d?.canais_venda || row.valor };
-        case "Materiais utilizados": return { ...row, valor: d?.ferramentas_atuais || row.valor };
-        case "Controle atual": return { ...row, valor: d?.onde_retrabalho || row.valor };
-        case "Comunicação": return { ...row, valor: d?.como_chegam_leads || row.valor };
-        default: return row;
-      }
-    });
-  return { contexto_rows: fill(DEFAULT_CTX_ROWS) };
+function ctxFromCliente(clienteNome: string, contato: string): Partial<FormProposta> {
+  const hoje = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  return {
+    contexto_rows: [
+      { label: "Cliente", valor: clienteNome },
+      { label: "Contato", valor: contato },
+      { label: "Data da proposta", valor: hoje },
+    ],
+  };
 }
 
 // ── Status opts ────────────────────────────────────────────────────────────────
@@ -425,20 +406,20 @@ const STATUS_OPTS = [
 ];
 
 type Props = {
-  clienteId: string; empresaNome: string; clienteNome: string; segmento: string;
+  clienteId: string; empresaNome: string; clienteNome: string; clienteContato: string; segmento: string;
   propostaConteudo: Record<string, unknown> | null;
   propostaStatus: string | null;
-  diagnosticoContexto: DiagnosticoContexto | null;
+  diagnosticoContexto: null;
 };
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function PropostaCliente({ clienteId, empresaNome, clienteNome, segmento, propostaConteudo, propostaStatus, diagnosticoContexto }: Props) {
+export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteContato, segmento, propostaConteudo, propostaStatus }: Props) {
   const [aberto, setAberto] = useState(false);
   const [form, setForm] = useState<FormProposta>(() => {
     const base = formFromConteudo(propostaConteudo);
-    if (!propostaConteudo && (diagnosticoContexto || empresaNome)) {
-      return { ...base, ...ctxFromDiag(clienteNome, segmento, diagnosticoContexto) };
+    if (!propostaConteudo) {
+      return { ...base, ...ctxFromCliente(clienteNome, clienteContato) };
     }
     return base;
   });
@@ -542,11 +523,10 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, segmento,
                 <button type="button" onClick={() => setModo("editar")} className={`admin-tab ${modo === "editar" ? "active" : ""}`}>Editar</button>
                 <button type="button" onClick={() => setModo("visualizar")} className={`admin-tab ${modo === "visualizar" ? "active" : ""}`}>Visualizar</button>
               </div>
-              {(diagnosticoContexto || empresaNome) && modo === "editar" && (
-                <button type="button" onClick={() => setForm((p) => ({ ...p, ...ctxFromDiag(clienteNome, segmento, diagnosticoContexto) }))}
-                  className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "rgba(46,155,175,0.08)", color: "#2E9BAF", border: "1px solid rgba(46,155,175,0.2)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}
-                  title="Preenche contexto com dados do diagnóstico">
-                  ↺ Sincronizar diagnóstico
+              {modo === "editar" && (
+                <button type="button" onClick={() => setForm((p) => ({ ...p, ...ctxFromCliente(clienteNome, clienteContato) }))}
+                  className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "rgba(46,155,175,0.08)", color: "#2E9BAF", border: "1px solid rgba(46,155,175,0.2)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+                  ↺ Preencher dados do cliente
                 </button>
               )}
             </div>
