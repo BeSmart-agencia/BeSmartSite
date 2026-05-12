@@ -580,11 +580,11 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
                     <label className={L}>Parágrafo introdutório</label>
                     <textarea value={form.contexto_intro} onChange={(e) => set("contexto_intro", e.target.value)} className={A} rows={3} placeholder="A partir das conversas iniciais com [cliente], identificamos..." />
                   </div>
-                  <div className="flex flex-col gap-2">
+                  <div className="grid sm:grid-cols-2 gap-3">
                     {form.contexto_rows.map((row, i) => (
-                      <div key={row.label} className="flex gap-3 items-center">
-                        <span className="text-xs flex-shrink-0 w-44 text-right" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{row.label}</span>
-                        <input value={row.valor} onChange={(e) => setCtxRow(i, "valor", e.target.value)} className={`${I} flex-1`} placeholder={row.label} />
+                      <div key={row.label} className="admin-field">
+                        <label className={L}>{row.label}</label>
+                        <input value={row.valor} onChange={(e) => setCtxRow(i, "valor", e.target.value)} className={I} placeholder={row.label} />
                       </div>
                     ))}
                   </div>
@@ -730,11 +730,11 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
 
                 {/* 6.1 Condições de pagamento */}
                 <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>6.1 Condições de Pagamento</p>
-                <div className="flex flex-col gap-2">
+                <div className="grid sm:grid-cols-2 gap-3">
                   {form.condicoes_pagamento.map((row, i) => (
-                    <div key={row.item} className="flex gap-3 items-center">
-                      <span className="text-xs flex-shrink-0 w-44 text-right" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{row.item}</span>
-                      <input value={row.descricao} onChange={(e) => setCondicao(i, "descricao", e.target.value)} className={`${I} flex-1`} placeholder={row.item} />
+                    <div key={row.item} className="admin-field">
+                      <label className={L}>{row.item}</label>
+                      <input value={row.descricao} onChange={(e) => setCondicao(i, "descricao", e.target.value)} className={I} placeholder={row.item} />
                     </div>
                   ))}
                 </div>
