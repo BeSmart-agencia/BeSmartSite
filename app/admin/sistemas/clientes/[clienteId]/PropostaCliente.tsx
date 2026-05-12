@@ -268,16 +268,46 @@ const STATUS_OPTS = [
   { value: "recusada", label: "Recusada", color: "#F87171" },
 ];
 
+type DiagnosticoContexto = {
+  tempo_mercado: string; num_funcionarios: string;
+  canais_venda: string; como_chegam_leads: string;
+  quem_responde_leads: string; ferramentas_atuais: string;
+  onde_retrabalho: string;
+};
+
 type Props = {
   clienteId: string;
   empresaNome: string;
+  segmento: string;
   propostaConteudo: Record<string, unknown> | null;
   propostaStatus: string | null;
+  diagnosticoContexto: DiagnosticoContexto | null;
 };
 
-export function PropostaCliente({ clienteId, empresaNome, propostaConteudo, propostaStatus }: Props) {
+function ctxFromDiag(empresaNome: string, segmento: string, d: DiagnosticoContexto | null): Partial<FormProposta> {
+  if (!d) return {};
+  return {
+    ctx_empresa: empresaNome,
+    ctx_segmento: segmento,
+    ctx_tempo_mercado: d.tempo_mercado,
+    ctx_estrutura: d.num_funcionarios,
+    ctx_canais_venda: d.canais_venda,
+    ctx_como_chegam_leads: d.como_chegam_leads,
+    ctx_quem_atende: d.quem_responde_leads,
+    ctx_controle_atual: d.ferramentas_atuais,
+    ctx_retrabalho: d.onde_retrabalho,
+  };
+}
+
+export function PropostaCliente({ clienteId, empresaNome, segmento, propostaConteudo, propostaStatus, diagnosticoContexto }: Props) {
   const [aberto, setAberto] = useState(false);
-  const [form, setForm] = useState<FormProposta>(() => formFromConteudo(propostaConteudo));
+  const [form, setForm] = useState<FormProposta>(() => {
+    const base = formFromConteudo(propostaConteudo);
+    if (!propostaConteudo && diagnosticoContexto) {
+      return { ...base, ...ctxFromDiag(empresaNome, segmento, diagnosticoContexto) };
+    }
+    return base;
+  });
   const [modo, setModo] = useState<"editar" | "visualizar">("editar");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -370,9 +400,22 @@ export function PropostaCliente({ clienteId, empresaNome, propostaConteudo, prop
       {aberto && (
         <div className="px-5 pb-5 flex flex-col gap-5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <div className="flex items-center justify-between gap-3 pt-4">
-            <div className="admin-tabs" style={{ flex: "unset" }}>
-              <button type="button" onClick={() => setModo("editar")} className={`admin-tab ${modo === "editar" ? "active" : ""}`}>Editar</button>
-              <button type="button" onClick={() => setModo("visualizar")} className={`admin-tab ${modo === "visualizar" ? "active" : ""}`}>Visualizar</button>
+            <div className="flex items-center gap-2">
+              <div className="admin-tabs" style={{ flex: "unset" }}>
+                <button type="button" onClick={() => setModo("editar")} className={`admin-tab ${modo === "editar" ? "active" : ""}`}>Editar</button>
+                <button type="button" onClick={() => setModo("visualizar")} className={`admin-tab ${modo === "visualizar" ? "active" : ""}`}>Visualizar</button>
+              </div>
+              {diagnosticoContexto && modo === "editar" && (
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, ...ctxFromDiag(empresaNome, segmento, diagnosticoContexto) }))}
+                  className="text-xs px-3 py-1.5 rounded-lg"
+                  style={{ background: "rgba(46,155,175,0.08)", color: "#2E9BAF", border: "1px solid rgba(46,155,175,0.2)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}
+                  title="Preenche os campos de contexto com os dados do diagnóstico"
+                >
+                  ↺ Sincronizar diagnóstico
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <select

@@ -25,7 +25,7 @@ export default async function ClientePerfilPage({ params }: Props) {
   const [{ data: cliente }, { data: projetos }, { data: diagnostico }] = await Promise.all([
     supabase.from("clientes").select("*, proposta_conteudo, proposta_status").eq("id", clienteId).single(),
     supabase.from("projetos").select("*").eq("cliente_id", clienteId).order("created_at", { ascending: false }),
-    supabase.from("diagnosticos").select("id, resolver_uma_coisa, orcamento, created_at").eq("cliente_id", clienteId).maybeSingle(),
+    supabase.from("diagnosticos").select("id, resolver_uma_coisa, orcamento, created_at, tempo_mercado, num_funcionarios, canais_venda, como_chegam_leads, quem_responde_leads, ferramentas_atuais, onde_retrabalho").eq("cliente_id", clienteId).maybeSingle(),
   ]);
 
   if (!cliente) notFound();
@@ -149,8 +149,18 @@ export default async function ClientePerfilPage({ params }: Props) {
       <PropostaCliente
         clienteId={clienteId}
         empresaNome={cliente.empresa}
+        segmento={cliente.segmento ?? ""}
         propostaConteudo={cliente.proposta_conteudo ?? null}
         propostaStatus={cliente.proposta_status ?? null}
+        diagnosticoContexto={diagnostico ? {
+          tempo_mercado: diagnostico.tempo_mercado ?? "",
+          num_funcionarios: diagnostico.num_funcionarios ?? "",
+          canais_venda: Array.isArray(diagnostico.canais_venda) ? diagnostico.canais_venda.join(", ") : (diagnostico.canais_venda ?? ""),
+          como_chegam_leads: Array.isArray(diagnostico.como_chegam_leads) ? diagnostico.como_chegam_leads.join(", ") : (diagnostico.como_chegam_leads ?? ""),
+          quem_responde_leads: diagnostico.quem_responde_leads ?? "",
+          ferramentas_atuais: diagnostico.ferramentas_atuais ?? "",
+          onde_retrabalho: diagnostico.onde_retrabalho ?? "",
+        } : null}
       />
 
       {/* Projetos */}
