@@ -418,10 +418,12 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
   const [aberto, setAberto] = useState(false);
   const [form, setForm] = useState<FormProposta>(() => {
     const base = formFromConteudo(propostaConteudo);
-    if (!propostaConteudo) {
-      return { ...base, ...ctxFromCliente(clienteNome, clienteContato) };
-    }
-    return base;
+    const hoje = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+    const autoFill: Record<string, string> = { "Cliente": clienteNome, "Contato": clienteContato, "Data da proposta": hoje };
+    const rows = base.contexto_rows.map((row) =>
+      row.valor ? row : { ...row, valor: autoFill[row.label] ?? "" }
+    );
+    return { ...base, contexto_rows: rows };
   });
   const [modo, setModo] = useState<"editar" | "visualizar">("editar");
   const [saving, setSaving] = useState(false);
