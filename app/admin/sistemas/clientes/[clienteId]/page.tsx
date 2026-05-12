@@ -5,6 +5,9 @@ import { NovoProjeto } from "./NovoProjeto";
 import { ProjetoCard } from "./ProjetoCard";
 import { CopyButton } from "./CopyButton";
 import { ExcluirCliente } from "./ExcluirCliente";
+import { PropostaCliente } from "./PropostaCliente";
+
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ clienteId: string }> };
 
@@ -20,7 +23,7 @@ export default async function ClientePerfilPage({ params }: Props) {
   const { clienteId } = await params;
 
   const [{ data: cliente }, { data: projetos }, { data: diagnostico }] = await Promise.all([
-    supabase.from("clientes").select("*").eq("id", clienteId).single(),
+    supabase.from("clientes").select("*, proposta_conteudo, proposta_status").eq("id", clienteId).single(),
     supabase.from("projetos").select("*").eq("cliente_id", clienteId).order("created_at", { ascending: false }),
     supabase.from("diagnosticos").select("id, resolver_uma_coisa, orcamento, created_at").eq("cliente_id", clienteId).maybeSingle(),
   ]);
@@ -141,6 +144,14 @@ export default async function ClientePerfilPage({ params }: Props) {
           </div>
         )}
       </div>
+
+      {/* Proposta */}
+      <PropostaCliente
+        clienteId={clienteId}
+        empresaNome={cliente.empresa}
+        propostaConteudo={cliente.proposta_conteudo ?? null}
+        propostaStatus={cliente.proposta_status ?? null}
+      />
 
       {/* Projetos */}
       <div className="mb-4 flex items-center justify-between">

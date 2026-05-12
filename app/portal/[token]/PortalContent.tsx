@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import { abrirChamado, responderPropostaCliente } from "@/app/admin/sistemas/actions";
+import { abrirChamado, aceitarPropostaPortal, recusarPropostaPortal } from "@/app/admin/sistemas/actions";
 import { useRouter } from "next/navigation";
 
 type PropostaConteudo = {
@@ -16,7 +16,7 @@ type PropostaConteudo = {
   proximos_passos?: string[];
 };
 
-type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null; forma_pagamento: string | null; proposta_conteudo: PropostaConteudo | null; proposta_status: string | null };
+type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null; forma_pagamento: string | null };
 type Diagnostico = { resolver_uma_coisa: string | null; impacto_resolucao: string | null } | null;
 type Etapa = { id: string; projeto_id: string; nome: string; status: string; prazo: string | null; ordem: number };
 type Item = { id: string; projeto_id: string; descricao: string; concluido: boolean };
@@ -30,6 +30,8 @@ type Props = {
   itens: Item[];
   chamados: Chamado[];
   diagnostico: Diagnostico;
+  propostaConteudo: PropostaConteudo | null;
+  propostaStatus: string | null;
 };
 
 function statusCor(s: string) {
@@ -116,14 +118,16 @@ function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: s
 
 type RespostaState = { error?: string; success?: boolean; acao?: "aprovar" | "recusar" };
 
-function RespostaProposta({ projetoId }: { projetoId: string }) {
+function RespostaProposta({ clienteId }: { clienteId: string }) {
   const router = useRouter();
   const [confirmando, setConfirmando] = useState<"aprovar" | "recusar" | null>(null);
 
   const [state, formAction, pending] = useActionState<RespostaState, FormData>(
     async (_prev, fd) => {
       const acao = fd.get("acao") as "aprovar" | "recusar";
-      const result = await responderPropostaCliente(projetoId, acao);
+      const result = acao === "aprovar"
+        ? await aceitarPropostaPortal(clienteId)
+        : await recusarPropostaPortal(clienteId);
       if (result?.error) return { error: result.error };
       router.refresh();
       return { success: true, acao };
@@ -190,13 +194,13 @@ type Aba = "projeto" | "proposta" | "chamados";
 
 const APROVADOS = ["Aprovado", "Em desenvolvimento", "Entregue"];
 
-export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico }: Props) {
+export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico, propostaConteudo, propostaStatus }: Props) {
   const [projetoAtivo, setProjetoAtivo] = useState<string | null>(projetos[0]?.id ?? null);
   const projeto = projetos.find((p) => p.id === projetoAtivo) ?? null;
 
-  const propostaAprovada = APROVADOS.includes(projeto?.status ?? "") || projeto?.proposta_status === "aprovada";
-  const temProposta = !!(projeto?.proposta_conteudo);
-  const propostaPendente = temProposta && !propostaAprovada && projeto?.proposta_status !== "recusada";
+  const propostaAprovada = propostaStatus === "aprovada" || APROVADOS.includes(projeto?.status ?? "");
+  const temProposta = !!(propostaConteudo);
+  const propostaPendente = temProposta && !propostaAprovada && propostaStatus !== "recusada";
 
   const defaultAba: Aba = propostaPendente ? "proposta" : propostaAprovada ? "projeto" : temProposta ? "proposta" : "projeto";
   const [abaAtiva, setAbaAtiva] = useState<Aba>(defaultAba);
@@ -206,11 +210,11 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
   const concluidas = projetoEtapas.filter((e) => e.status === "concluído").length;
   const progresso = projetoEtapas.length > 0 ? Math.round((concluidas / projetoEtapas.length) * 100) : 0;
 
-  if (!projetos.length) {
+  if (!projetos.length && !temProposta) {
     return (
       <div className="glass rounded-2xl p-10 text-center">
         <p className="text-sm" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
-          Nenhum projeto iniciado ainda. Em breve você verá o andamento aqui.
+          Em breve você verá o andamento do seu projeto aqui.
         </p>
       </div>
     );
@@ -455,33 +459,33 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
       )}
 
       {/* Aba Proposta */}
-      {abaAtiva === "proposta" && projeto?.proposta_conteudo && (
+      {abaAtiva === "proposta" && propostaConteudo && (
         <div className="flex flex-col gap-5">
           {/* Header */}
           <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, rgba(155,107,181,0.12), rgba(46,155,175,0.10))", border: "1px solid rgba(155,107,181,0.25)" }}>
             <h2 className="text-3xl font-bold mb-1" style={{ color: "#9B6BB5", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-              {projeto.proposta_conteudo.nome_sistema || projeto.nome}
+              {(propostaConteudo.nome_sistema as string) || cliente.empresa}
             </h2>
-            {projeto.proposta_conteudo.tagline && (
-              <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.tagline}</p>
+            {propostaConteudo.tagline && (
+              <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>{propostaConteudo.tagline as string}</p>
             )}
             <div className="mt-4 rounded-xl px-5 py-3 inline-block" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>Proposta elaborada para</p>
-              <p className="font-bold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.contexto?.empresa || cliente.empresa}</p>
+              <p className="font-bold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>{((propostaConteudo.contexto as Record<string, string>)?.empresa) || cliente.empresa}</p>
             </div>
-            {(projeto.proposta_conteudo.validade_dias ?? 0) > 0 && (
+            {(propostaConteudo.validade_dias as number ?? 0) > 0 && (
               <p className="text-xs mt-3" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
-                Validade: {projeto.proposta_conteudo.validade_dias} dias
+                Validade: {propostaConteudo.validade_dias as number} dias
               </p>
             )}
           </div>
 
           {/* Contexto */}
-          {projeto.proposta_conteudo.contexto && Object.values(projeto.proposta_conteudo.contexto).some(Boolean) && (
+          {propostaConteudo.contexto && Object.values(propostaConteudo.contexto as Record<string, string>).some(Boolean) && (
             <div className="glass rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Contexto e Diagnóstico</p>
               {(() => {
-                const ctx = projeto.proposta_conteudo.contexto!;
+                const ctx = propostaConteudo.contexto as Record<string, string>;
                 const labels: Record<string, string> = {
                   empresa: "Empresa", segmento: "Segmento", tempo_mercado: "Tempo de mercado",
                   estrutura: "Estrutura", canais_venda: "Canais de venda",
@@ -503,11 +507,11 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
                   </div>
                 );
               })()}
-              {(projeto.proposta_conteudo.dores ?? []).length > 0 && (
+              {((propostaConteudo.dores as string[]) ?? []).length > 0 && (
                 <div className="mt-4">
                   <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Principais dores identificadas</p>
                   <ul className="flex flex-col gap-2">
-                    {projeto.proposta_conteudo.dores!.map((d, i) => (
+                    {(propostaConteudo.dores as string[]).map((d, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
                         <span style={{ color: "#9B6BB5", flexShrink: 0 }}>•</span>{d}
                       </li>
@@ -519,11 +523,11 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
           )}
 
           {/* Módulos */}
-          {(projeto.proposta_conteudo.modulos ?? []).length > 0 && (
+          {((propostaConteudo.modulos as Array<{ titulo: string; itens: string[] }>) ?? []).length > 0 && (
             <div className="glass rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>A Solução</p>
               <div className="flex flex-col gap-3">
-                {projeto.proposta_conteudo.modulos!.map((m, i) => (
+                {(propostaConteudo.modulos as Array<{ titulo: string; itens: string[] }>).map((m, i) => (
                   <div key={i} className="rounded-xl p-4" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.15)" }}>
                     <p className="text-sm font-bold mb-2" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>{m.titulo}</p>
                     <ul className="flex flex-col gap-1">
@@ -540,56 +544,62 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
           )}
 
           {/* Planos */}
-          {(projeto.proposta_conteudo.plano_a?.valor || projeto.proposta_conteudo.plano_b?.start) && (
-            <div className="glass rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Planos e Valores</p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {projeto.proposta_conteudo.plano_a && (
-                  <div className="rounded-xl p-4" style={{ background: projeto.proposta_conteudo.plano_recomendado === "A" ? "rgba(155,107,181,0.10)" : "rgba(255,255,255,0.03)", border: projeto.proposta_conteudo.plano_recomendado === "A" ? "1px solid rgba(155,107,181,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
-                    <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Plano A — Exclusivo</p>
-                    {projeto.proposta_conteudo.plano_a.valor ? <p className="text-2xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>R$ {projeto.proposta_conteudo.plano_a.valor.toLocaleString("pt-BR")}</p> : null}
-                    {projeto.proposta_conteudo.plano_a.extra_info && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.plano_a.extra_info}</p>}
-                    <ul className="flex flex-col gap-1">
-                      {(projeto.proposta_conteudo.plano_a.beneficios ?? []).map((b, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9B6BB5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {projeto.proposta_conteudo.plano_b && (
-                  <div className="rounded-xl p-4" style={{ background: projeto.proposta_conteudo.plano_recomendado === "B" ? "rgba(46,155,175,0.08)" : "rgba(255,255,255,0.03)", border: projeto.proposta_conteudo.plano_recomendado === "B" ? "1px solid rgba(46,155,175,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>Plano B — Mensalidade</p>
-                      {projeto.proposta_conteudo.plano_recomendado === "B" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>★ Recomendado</span>}
+          {(() => {
+            const pa = propostaConteudo.plano_a as { valor?: number; extra_info?: string; beneficios?: string[] } | null;
+            const pb = propostaConteudo.plano_b as { start?: number; mensalidade?: number; limite?: string; beneficios?: string[] } | null;
+            const rec = propostaConteudo.plano_recomendado as string;
+            if (!pa?.valor && !pb?.start) return null;
+            return (
+              <div className="glass rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Planos e Valores</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {pa && (
+                    <div className="rounded-xl p-4" style={{ background: rec === "A" ? "rgba(155,107,181,0.10)" : "rgba(255,255,255,0.03)", border: rec === "A" ? "1px solid rgba(155,107,181,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
+                      <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Plano A — Exclusivo</p>
+                      {pa.valor ? <p className="text-2xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>R$ {pa.valor.toLocaleString("pt-BR")}</p> : null}
+                      {pa.extra_info && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{pa.extra_info}</p>}
+                      <ul className="flex flex-col gap-1">
+                        {(pa.beneficios ?? []).map((b, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9B6BB5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    {(projeto.proposta_conteudo.plano_b.start || projeto.proposta_conteudo.plano_b.mensalidade) ? (
-                      <p className="text-xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                        Start: R$ {(projeto.proposta_conteudo.plano_b.start ?? 0).toLocaleString("pt-BR")} + R$ {(projeto.proposta_conteudo.plano_b.mensalidade ?? 0).toLocaleString("pt-BR")}/mês
-                      </p>
-                    ) : null}
-                    {projeto.proposta_conteudo.plano_b.limite && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.plano_b.limite}</p>}
-                    <ul className="flex flex-col gap-1">
-                      {(projeto.proposta_conteudo.plano_b.beneficios ?? []).map((b, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9BAF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                  )}
+                  {pb && (
+                    <div className="rounded-xl p-4" style={{ background: rec === "B" ? "rgba(46,155,175,0.08)" : "rgba(255,255,255,0.03)", border: rec === "B" ? "1px solid rgba(46,155,175,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>Plano B — Mensalidade</p>
+                        {rec === "B" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>★ Recomendado</span>}
+                      </div>
+                      {(pb.start || pb.mensalidade) ? (
+                        <p className="text-xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                          Start: R$ {(pb.start ?? 0).toLocaleString("pt-BR")} + R$ {(pb.mensalidade ?? 0).toLocaleString("pt-BR")}/mês
+                        </p>
+                      ) : null}
+                      {pb.limite && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{pb.limite}</p>}
+                      <ul className="flex flex-col gap-1">
+                        {(pb.beneficios ?? []).map((b, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9BAF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Cronograma */}
-          {(projeto.proposta_conteudo.cronograma ?? []).length > 0 && (
+          {((propostaConteudo.cronograma as Array<{ periodo: string; descricao: string }>) ?? []).length > 0 && (
             <div className="glass rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>Cronograma</p>
               <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
-                {projeto.proposta_conteudo.cronograma!.map((row, i) => (
-                  <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < projeto.proposta_conteudo!.cronograma!.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                {(propostaConteudo.cronograma as Array<{ periodo: string; descricao: string }>).map((row, i, arr) => (
+                  <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
                     <span className="text-xs font-semibold flex-shrink-0 w-28" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>{row.periodo}</span>
                     <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>{row.descricao}</span>
                   </div>
@@ -599,37 +609,37 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
           )}
 
           {/* Próximos passos */}
-          {(projeto.proposta_conteudo.proximos_passos ?? []).length > 0 && (
+          {((propostaConteudo.proximos_passos as string[]) ?? []).length > 0 && (
             <div className="glass rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Próximos Passos</p>
               <ol className="flex flex-col gap-2">
-                {projeto.proposta_conteudo.proximos_passos!.map((p, i) => (
+                {(propostaConteudo.proximos_passos as string[]).map((p, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
                     <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5" style={{ background: "rgba(155,107,181,0.15)", color: "#9B6BB5" }}>{i + 1}</span>
                     {p}
                   </li>
                 ))}
               </ol>
-              {(projeto.proposta_conteudo.validade_dias ?? 0) > 0 && (
+              {(propostaConteudo.validade_dias as number ?? 0) > 0 && (
                 <p className="text-xs mt-5 text-center" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
-                  Esta proposta tem validade de {projeto.proposta_conteudo.validade_dias} dias.
+                  Esta proposta tem validade de {propostaConteudo.validade_dias as number} dias.
                 </p>
               )}
             </div>
           )}
 
-          {/* Resposta à proposta ou badge de aceita */}
+          {/* Resposta */}
           {propostaAprovada ? (
             <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <p className="text-sm font-semibold" style={{ color: "#4ADE80", fontFamily: "var(--font-inter), sans-serif" }}>Proposta aceita</p>
             </div>
-          ) : projeto.proposta_status === "recusada" ? (
+          ) : propostaStatus === "recusada" ? (
             <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
               <p className="text-sm" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>Proposta recusada. Entre em contato se quiser conversar.</p>
             </div>
           ) : (
-            <RespostaProposta projetoId={projeto.id} />
+            <RespostaProposta clienteId={cliente.id} />
           )}
         </div>
       )}

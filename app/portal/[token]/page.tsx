@@ -16,7 +16,7 @@ export default async function PortalPage({ params }: Props) {
 
   const { data: cliente } = await supabase
     .from("clientes")
-    .select("id, nome, empresa, onboarding_token")
+    .select("id, nome, empresa, onboarding_token, proposta_conteudo, proposta_status")
     .eq("onboarding_token", token)
     .maybeSingle();
 
@@ -25,7 +25,7 @@ export default async function PortalPage({ params }: Props) {
   const [{ data: projetos }, { data: diagnostico }, { data: chamadosAbertos }] = await Promise.all([
     supabase
       .from("projetos")
-      .select("id, nome, descricao, status, data_inicio, prazo_entrega, valor_total, forma_pagamento, proposta_conteudo, proposta_status")
+      .select("id, nome, descricao, status, data_inicio, prazo_entrega, valor_total, forma_pagamento")
       .eq("cliente_id", cliente.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -76,6 +76,8 @@ export default async function PortalPage({ params }: Props) {
           itens={itens ?? []}
           chamados={chamados ?? []}
           diagnostico={diagnostico ?? null}
+          propostaConteudo={(cliente.proposta_conteudo as Record<string, unknown>) ?? null}
+          propostaStatus={cliente.proposta_status ?? null}
         />
       </div>
     </div>
