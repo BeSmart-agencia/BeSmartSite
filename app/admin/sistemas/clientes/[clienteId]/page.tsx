@@ -4,6 +4,7 @@ import Link from "next/link";
 import { NovoProjeto } from "./NovoProjeto";
 import { ProjetoCard } from "./ProjetoCard";
 import { CopyButton } from "./CopyButton";
+import { ExcluirCliente } from "./ExcluirCliente";
 
 type Props = { params: Promise<{ clienteId: string }> };
 
@@ -75,6 +76,7 @@ export default async function ClientePerfilPage({ params }: Props) {
             >
               {diagnostico ? "Ver Diagnóstico" : "Fazer Diagnóstico"}
             </Link>
+            <ExcluirCliente clienteId={clienteId} nomeEmpresa={cliente.empresa} />
           </div>
         </div>
 

@@ -346,6 +346,32 @@ export async function salvarPropostaConteudo(projetoId: string, conteudo: unknow
   return { success: true };
 }
 
+export async function excluirCliente(clienteId: string) {
+  await supabase.from("chamados").delete().eq("cliente_id", clienteId);
+  await supabase.from("mensalidades").delete().in(
+    "projeto_id",
+    (await supabase.from("projetos").select("id").eq("cliente_id", clienteId)).data?.map((p) => p.id) ?? []
+  );
+  await supabase.from("parcelas").delete().in(
+    "projeto_id",
+    (await supabase.from("projetos").select("id").eq("cliente_id", clienteId)).data?.map((p) => p.id) ?? []
+  );
+  await supabase.from("etapas").delete().in(
+    "projeto_id",
+    (await supabase.from("projetos").select("id").eq("cliente_id", clienteId)).data?.map((p) => p.id) ?? []
+  );
+  await supabase.from("itens_escopo").delete().in(
+    "projeto_id",
+    (await supabase.from("projetos").select("id").eq("cliente_id", clienteId)).data?.map((p) => p.id) ?? []
+  );
+  await supabase.from("projetos").delete().eq("cliente_id", clienteId);
+  await supabase.from("diagnosticos").delete().eq("cliente_id", clienteId);
+  const { error } = await supabase.from("clientes").delete().eq("id", clienteId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/sistemas/clientes");
+  return { success: true };
+}
+
 export async function responderPropostaCliente(projetoId: string, resposta: "aprovar" | "recusar") {
   const updates =
     resposta === "aprovar"
