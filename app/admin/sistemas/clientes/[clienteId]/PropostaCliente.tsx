@@ -45,11 +45,22 @@ type FormProposta = {
   proximos_passos_texto: string;
 };
 
+const DEFAULT_CTX_ROWS = [
+  { label: "Profissional", valor: "" },
+  { label: "Área de atuação", valor: "" },
+  { label: "Público atendido", valor: "" },
+  { label: "Modelo de trabalho", valor: "" },
+  { label: "Canais atuais", valor: "" },
+  { label: "Materiais utilizados", valor: "" },
+  { label: "Controle atual", valor: "" },
+  { label: "Comunicação", valor: "" },
+];
+
 const DEFAULT_FORM: FormProposta = {
   nome_sistema: "", tagline: "", tagline_final: "", validade_dias: "30",
   data_emissao: new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
   contexto_intro: "",
-  contexto_rows: [{ label: "", valor: "" }],
+  contexto_rows: DEFAULT_CTX_ROWS,
   necessidades_titulo: "Principais Necessidades Identificadas",
   necessidades_texto: "",
   solucao_descricao: "",
@@ -387,19 +398,20 @@ type DiagnosticoContexto = {
   onde_retrabalho: string;
 };
 
-function ctxFromDiag(empresaNome: string, segmento: string, d: DiagnosticoContexto | null): Partial<FormProposta> {
-  const rows: Array<{ label: string; valor: string }> = [];
-  if (empresaNome) rows.push({ label: "Profissional / Empresa", valor: empresaNome });
-  if (segmento) rows.push({ label: "Área de atuação", valor: segmento });
-  if (d?.tempo_mercado) rows.push({ label: "Tempo de mercado", valor: d.tempo_mercado });
-  if (d?.num_funcionarios) rows.push({ label: "Estrutura", valor: d.num_funcionarios });
-  if (d?.canais_venda) rows.push({ label: "Canais atuais", valor: d.canais_venda });
-  if (d?.como_chegam_leads) rows.push({ label: "Como chegam leads", valor: d.como_chegam_leads });
-  if (d?.quem_responde_leads) rows.push({ label: "Quem atende", valor: d.quem_responde_leads });
-  if (d?.ferramentas_atuais) rows.push({ label: "Materiais utilizados / Controle atual", valor: d.ferramentas_atuais });
-  if (d?.onde_retrabalho) rows.push({ label: "Comunicação", valor: d.onde_retrabalho });
-  if (rows.length === 0) rows.push({ label: "", valor: "" });
-  return { contexto_rows: rows };
+function ctxFromDiag(clienteNome: string, segmento: string, d: DiagnosticoContexto | null): Partial<FormProposta> {
+  const fill = (base: typeof DEFAULT_CTX_ROWS) =>
+    base.map((row) => {
+      switch (row.label) {
+        case "Profissional": return { ...row, valor: clienteNome || row.valor };
+        case "Área de atuação": return { ...row, valor: segmento || row.valor };
+        case "Canais atuais": return { ...row, valor: d?.canais_venda || row.valor };
+        case "Materiais utilizados": return { ...row, valor: d?.ferramentas_atuais || row.valor };
+        case "Controle atual": return { ...row, valor: d?.onde_retrabalho || row.valor };
+        case "Comunicação": return { ...row, valor: d?.como_chegam_leads || row.valor };
+        default: return row;
+      }
+    });
+  return { contexto_rows: fill(DEFAULT_CTX_ROWS) };
 }
 
 // ── Status opts ────────────────────────────────────────────────────────────────
@@ -426,7 +438,7 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, segmento,
   const [form, setForm] = useState<FormProposta>(() => {
     const base = formFromConteudo(propostaConteudo);
     if (!propostaConteudo && (diagnosticoContexto || empresaNome)) {
-      return { ...base, ...ctxFromDiag(empresaNome, segmento, diagnosticoContexto) };
+      return { ...base, ...ctxFromDiag(clienteNome, segmento, diagnosticoContexto) };
     }
     return base;
   });
@@ -531,7 +543,7 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, segmento,
                 <button type="button" onClick={() => setModo("visualizar")} className={`admin-tab ${modo === "visualizar" ? "active" : ""}`}>Visualizar</button>
               </div>
               {(diagnosticoContexto || empresaNome) && modo === "editar" && (
-                <button type="button" onClick={() => setForm((p) => ({ ...p, ...ctxFromDiag(empresaNome, segmento, diagnosticoContexto) }))}
+                <button type="button" onClick={() => setForm((p) => ({ ...p, ...ctxFromDiag(clienteNome, segmento, diagnosticoContexto) }))}
                   className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "rgba(46,155,175,0.08)", color: "#2E9BAF", border: "1px solid rgba(46,155,175,0.2)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}
                   title="Preenche contexto com dados do diagnóstico">
                   ↺ Sincronizar diagnóstico
