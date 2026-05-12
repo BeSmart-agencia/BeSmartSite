@@ -4,7 +4,19 @@ import { useState, useActionState } from "react";
 import { abrirChamado } from "@/app/admin/sistemas/actions";
 import { useRouter } from "next/navigation";
 
-type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null; forma_pagamento: string | null };
+type PropostaConteudo = {
+  nome_sistema?: string; tagline?: string; validade_dias?: number;
+  contexto?: Record<string, string>;
+  dores?: string[];
+  modulos?: Array<{ titulo: string; itens: string[] }>;
+  plano_recomendado?: "A" | "B";
+  plano_a?: { valor?: number; extra_info?: string; beneficios?: string[] };
+  plano_b?: { start?: number; mensalidade?: number; limite?: string; beneficios?: string[] };
+  cronograma?: Array<{ periodo: string; descricao: string }>;
+  proximos_passos?: string[];
+};
+
+type Projeto = { id: string; nome: string; descricao: string | null; status: string; data_inicio: string | null; prazo_entrega: string | null; valor_total: number | null; forma_pagamento: string | null; proposta_conteudo: PropostaConteudo | null };
 type Diagnostico = { resolver_uma_coisa: string | null; impacto_resolucao: string | null } | null;
 type Etapa = { id: string; projeto_id: string; nome: string; status: string; prazo: string | null; ordem: number };
 type Item = { id: string; projeto_id: string; descricao: string; concluido: boolean };
@@ -100,11 +112,14 @@ function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: s
   );
 }
 
+type Aba = "projeto" | "proposta" | "chamados";
+
 export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico }: Props) {
   const [projetoAtivo, setProjetoAtivo] = useState<string | null>(projetos[0]?.id ?? null);
-  const [abaAtiva, setAbaAtiva] = useState<"projeto" | "chamados">("projeto");
-
+  const [abaAtiva, setAbaAtiva] = useState<Aba>("projeto");
   const projeto = projetos.find((p) => p.id === projetoAtivo) ?? null;
+  const temProposta = !!(projeto?.proposta_conteudo);
+
   const projetoEtapas = etapas.filter((e) => e.projeto_id === projetoAtivo);
   const projetoItens = itens.filter((i) => i.projeto_id === projetoAtivo);
   const concluidas = projetoEtapas.filter((e) => e.status === "concluído").length;
@@ -155,6 +170,11 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
         <button type="button" onClick={() => setAbaAtiva("projeto")} className={`admin-tab ${abaAtiva === "projeto" ? "active" : ""}`}>
           Meu Projeto
         </button>
+        {temProposta && (
+          <button type="button" onClick={() => setAbaAtiva("proposta")} className={`admin-tab ${abaAtiva === "proposta" ? "active" : ""}`}>
+            Proposta
+          </button>
+        )}
         <button type="button" onClick={() => setAbaAtiva("chamados")} className={`admin-tab ${abaAtiva === "chamados" ? "active" : ""}`}>
           Suporte
           {chamados.filter((c) => c.status !== "resolvido").length > 0 && (
@@ -343,6 +363,172 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Aba Proposta */}
+      {abaAtiva === "proposta" && projeto?.proposta_conteudo && (
+        <div className="flex flex-col gap-5">
+          {/* Header */}
+          <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, rgba(155,107,181,0.12), rgba(46,155,175,0.10))", border: "1px solid rgba(155,107,181,0.25)" }}>
+            <h2 className="text-3xl font-bold mb-1" style={{ color: "#9B6BB5", fontFamily: "var(--font-playfair), Georgia, serif" }}>
+              {projeto.proposta_conteudo.nome_sistema || projeto.nome}
+            </h2>
+            {projeto.proposta_conteudo.tagline && (
+              <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.tagline}</p>
+            )}
+            <div className="mt-4 rounded-xl px-5 py-3 inline-block" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>Proposta elaborada para</p>
+              <p className="font-bold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.contexto?.empresa || cliente.empresa}</p>
+            </div>
+            {(projeto.proposta_conteudo.validade_dias ?? 0) > 0 && (
+              <p className="text-xs mt-3" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
+                Validade: {projeto.proposta_conteudo.validade_dias} dias
+              </p>
+            )}
+          </div>
+
+          {/* Contexto */}
+          {projeto.proposta_conteudo.contexto && Object.values(projeto.proposta_conteudo.contexto).some(Boolean) && (
+            <div className="glass rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Contexto e Diagnóstico</p>
+              {(() => {
+                const ctx = projeto.proposta_conteudo.contexto!;
+                const labels: Record<string, string> = {
+                  empresa: "Empresa", segmento: "Segmento", tempo_mercado: "Tempo de mercado",
+                  estrutura: "Estrutura", canais_venda: "Canais de venda",
+                  como_chegam_leads: "Como chegam leads", quem_atende: "Quem atende",
+                  controle_atual: "Controle atual", retrabalho: "Retrabalho",
+                };
+                return (
+                  <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
+                    {Object.entries(labels).map(([key, label], i) => {
+                      const val = ctx[key];
+                      if (!val) return null;
+                      return (
+                        <div key={key} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                          <span className="text-xs font-semibold flex-shrink-0 w-40" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>{label}</span>
+                          <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>{val}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              {(projeto.proposta_conteudo.dores ?? []).length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Principais dores identificadas</p>
+                  <ul className="flex flex-col gap-2">
+                    {projeto.proposta_conteudo.dores!.map((d, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
+                        <span style={{ color: "#9B6BB5", flexShrink: 0 }}>•</span>{d}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Módulos */}
+          {(projeto.proposta_conteudo.modulos ?? []).length > 0 && (
+            <div className="glass rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>A Solução</p>
+              <div className="flex flex-col gap-3">
+                {projeto.proposta_conteudo.modulos!.map((m, i) => (
+                  <div key={i} className="rounded-xl p-4" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.15)" }}>
+                    <p className="text-sm font-bold mb-2" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>{m.titulo}</p>
+                    <ul className="flex flex-col gap-1">
+                      {m.itens.map((item, j) => (
+                        <li key={j} className="flex items-start gap-2 text-xs" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
+                          <span className="flex-shrink-0" style={{ color: "#9B6BB5" }}>—</span>{item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Planos */}
+          {(projeto.proposta_conteudo.plano_a?.valor || projeto.proposta_conteudo.plano_b?.start) && (
+            <div className="glass rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Planos e Valores</p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {projeto.proposta_conteudo.plano_a && (
+                  <div className="rounded-xl p-4" style={{ background: projeto.proposta_conteudo.plano_recomendado === "A" ? "rgba(155,107,181,0.10)" : "rgba(255,255,255,0.03)", border: projeto.proposta_conteudo.plano_recomendado === "A" ? "1px solid rgba(155,107,181,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
+                    <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Plano A — Exclusivo</p>
+                    {projeto.proposta_conteudo.plano_a.valor ? <p className="text-2xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>R$ {projeto.proposta_conteudo.plano_a.valor.toLocaleString("pt-BR")}</p> : null}
+                    {projeto.proposta_conteudo.plano_a.extra_info && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.plano_a.extra_info}</p>}
+                    <ul className="flex flex-col gap-1">
+                      {(projeto.proposta_conteudo.plano_a.beneficios ?? []).map((b, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9B6BB5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {projeto.proposta_conteudo.plano_b && (
+                  <div className="rounded-xl p-4" style={{ background: projeto.proposta_conteudo.plano_recomendado === "B" ? "rgba(46,155,175,0.08)" : "rgba(255,255,255,0.03)", border: projeto.proposta_conteudo.plano_recomendado === "B" ? "1px solid rgba(46,155,175,0.3)" : "1px solid rgba(255,255,255,0.07)" }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>Plano B — Mensalidade</p>
+                      {projeto.proposta_conteudo.plano_recomendado === "B" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>★ Recomendado</span>}
+                    </div>
+                    {(projeto.proposta_conteudo.plano_b.start || projeto.proposta_conteudo.plano_b.mensalidade) ? (
+                      <p className="text-xl font-bold mb-0.5" style={{ color: "#fff", fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                        Start: R$ {(projeto.proposta_conteudo.plano_b.start ?? 0).toLocaleString("pt-BR")} + R$ {(projeto.proposta_conteudo.plano_b.mensalidade ?? 0).toLocaleString("pt-BR")}/mês
+                      </p>
+                    ) : null}
+                    {projeto.proposta_conteudo.plano_b.limite && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{projeto.proposta_conteudo.plano_b.limite}</p>}
+                    <ul className="flex flex-col gap-1">
+                      {(projeto.proposta_conteudo.plano_b.beneficios ?? []).map((b, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9BAF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>{b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Cronograma */}
+          {(projeto.proposta_conteudo.cronograma ?? []).length > 0 && (
+            <div className="glass rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>Cronograma</p>
+              <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
+                {projeto.proposta_conteudo.cronograma!.map((row, i) => (
+                  <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < projeto.proposta_conteudo!.cronograma!.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                    <span className="text-xs font-semibold flex-shrink-0 w-28" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>{row.periodo}</span>
+                    <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>{row.descricao}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Próximos passos */}
+          {(projeto.proposta_conteudo.proximos_passos ?? []).length > 0 && (
+            <div className="glass rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}>Próximos Passos</p>
+              <ol className="flex flex-col gap-2">
+                {projeto.proposta_conteudo.proximos_passos!.map((p, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#D1D5DB", fontFamily: "var(--font-inter), sans-serif" }}>
+                    <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5" style={{ background: "rgba(155,107,181,0.15)", color: "#9B6BB5" }}>{i + 1}</span>
+                    {p}
+                  </li>
+                ))}
+              </ol>
+              {(projeto.proposta_conteudo.validade_dias ?? 0) > 0 && (
+                <p className="text-xs mt-5 text-center" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>
+                  Esta proposta tem validade de {projeto.proposta_conteudo.validade_dias} dias.
+                </p>
+              )}
             </div>
           )}
         </div>

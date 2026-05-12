@@ -336,3 +336,13 @@ export async function marcarMensalidadePendente(mensalidadeId: string) {
   revalidatePath("/admin/sistemas/financeiro/mensalidades");
   return { success: true };
 }
+
+// ── Proposta Rica ─────────────────────────────────────────────────────────────
+
+export async function salvarPropostaConteudo(projetoId: string, conteudo: unknown, clienteId: string) {
+  const { error } = await supabase.from("projetos").update({ proposta_conteudo: conteudo }).eq("id", projetoId);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}/projeto/${projetoId}`);
+  revalidatePath(`/portal`);
+  return { success: true };
+}
