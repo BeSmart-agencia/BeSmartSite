@@ -45,11 +45,10 @@ type FormProposta = {
   proximos_passos_texto: string;
 };
 
-const DEFAULT_CTX_ROWS = [
-  { label: "Cliente", valor: "" },
-  { label: "Contato", valor: "" },
-  { label: "Data da proposta", valor: "" },
-];
+const CTX_LABELS = ["Profissional", "Área de atuação", "Público atendido", "Canais atuais", "Materiais utilizados", "Controle atual", "Comunicação"];
+const DEFAULT_CTX_ROWS = CTX_LABELS.map((label) => ({ label, valor: "" }));
+
+const COND_LABELS = ["Pagamento de start", "1ª mensalidade", "Mensalidades seguintes", "Limite do plano", "Plano de crescimento", "Forma de pagamento"];
 
 const DEFAULT_FORM: FormProposta = {
   nome_sistema: "", tagline: "", tagline_final: "", validade_dias: "30",
@@ -67,14 +66,7 @@ const DEFAULT_FORM: FormProposta = {
   plano_b_start: "", plano_b_mensalidade: "", plano_b_limite: "", plano_b_beneficios: "",
   plano_recomendacao_texto: "",
   cronograma: [{ periodo: "", descricao: "" }],
-  condicoes_pagamento: [
-    { item: "Pagamento de start", descricao: "" },
-    { item: "1ª mensalidade", descricao: "" },
-    { item: "Mensalidades seguintes", descricao: "" },
-    { item: "Limite do plano", descricao: "" },
-    { item: "Plano de crescimento", descricao: "" },
-    { item: "Forma de pagamento", descricao: "Pix, cartão de crédito ou boleto bancário" },
-  ],
+  condicoes_pagamento: COND_LABELS.map((item) => ({ item, descricao: item === "Forma de pagamento" ? "Pix, cartão de crédito ou boleto bancário" : "" })),
   proximos_passos_texto: "",
 };
 
@@ -96,7 +88,9 @@ function formFromConteudo(c: Record<string, unknown> | null): FormProposta {
       .filter(([k]) => legacy[k])
       .map(([k, label]) => ({ label, valor: legacy[k] }));
   }
-  if (contexto_rows.length === 0) contexto_rows = [{ label: "", valor: "" }];
+  // Ensure all fixed labels are present (merge saved values into canonical labels)
+  const savedMap = Object.fromEntries(contexto_rows.map((r) => [r.label, r.valor]));
+  contexto_rows = CTX_LABELS.map((label) => ({ label, valor: savedMap[label] ?? "" }));
 
   const pa = (c.plano_a as Record<string, unknown>) ?? {};
   const pb = (c.plano_b as Record<string, unknown>) ?? {};
@@ -126,8 +120,11 @@ function formFromConteudo(c: Record<string, unknown> | null): FormProposta {
     plano_b_beneficios: ((pb.beneficios as string[]) ?? []).join("\n"),
     plano_recomendacao_texto: String(c.plano_recomendacao_texto ?? ""),
     cronograma: ((c.cronograma as Array<{ periodo: string; descricao: string }>) ?? [{ periodo: "", descricao: "" }]),
-    condicoes_pagamento: ((c.condicoes_pagamento as Array<{ item: string; descricao: string }>) ??
-      DEFAULT_FORM.condicoes_pagamento),
+    condicoes_pagamento: (() => {
+      const saved = (c.condicoes_pagamento as Array<{ item: string; descricao: string }>) ?? [];
+      const savedMap = Object.fromEntries(saved.map((r) => [r.item, r.descricao]));
+      return COND_LABELS.map((item) => ({ item, descricao: savedMap[item] ?? (item === "Forma de pagamento" ? "Pix, cartão de crédito ou boleto bancário" : "") }));
+    })(),
     proximos_passos_texto: ((c.proximos_passos as string[]) ?? []).join("\n"),
   };
 }
@@ -384,14 +381,12 @@ function PropostaPreview({ c, empresaNome, clienteNome }: { c: PropostaConteudo;
   );
 }
 
-function ctxFromCliente(clienteNome: string, contato: string): Partial<FormProposta> {
-  const hoje = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+function ctxFromCliente(clienteNome: string): Partial<FormProposta> {
   return {
-    contexto_rows: [
-      { label: "Cliente", valor: clienteNome },
-      { label: "Contato", valor: contato },
-      { label: "Data da proposta", valor: hoje },
-    ],
+    contexto_rows: CTX_LABELS.map((label) => ({
+      label,
+      valor: label === "Profissional" ? clienteNome : "",
+    })),
   };
 }
 
@@ -418,10 +413,9 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
   const [aberto, setAberto] = useState(false);
   const [form, setForm] = useState<FormProposta>(() => {
     const base = formFromConteudo(propostaConteudo);
-    const hoje = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-    const autoFill: Record<string, string> = { "Cliente": clienteNome, "Contato": clienteContato, "Data da proposta": hoje };
+    if (!propostaConteudo) return { ...base, ...ctxFromCliente(clienteNome) };
     const rows = base.contexto_rows.map((row) =>
-      row.valor ? row : { ...row, valor: autoFill[row.label] ?? "" }
+      row.valor ? row : { ...row, valor: row.label === "Profissional" ? clienteNome : "" }
     );
     return { ...base, contexto_rows: rows };
   });
@@ -526,7 +520,7 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
                 <button type="button" onClick={() => setModo("visualizar")} className={`admin-tab ${modo === "visualizar" ? "active" : ""}`}>Visualizar</button>
               </div>
               {modo === "editar" && (
-                <button type="button" onClick={() => setForm((p) => ({ ...p, ...ctxFromCliente(clienteNome, clienteContato) }))}
+                <button type="button" onClick={() => setForm((p) => ({ ...p, ...ctxFromCliente(clienteNome) }))}
                   className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "rgba(46,155,175,0.08)", color: "#2E9BAF", border: "1px solid rgba(46,155,175,0.2)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
                   ↺ Preencher dados do cliente
                 </button>
@@ -586,20 +580,13 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
                     <label className={L}>Parágrafo introdutório</label>
                     <textarea value={form.contexto_intro} onChange={(e) => set("contexto_intro", e.target.value)} className={A} rows={3} placeholder="A partir das conversas iniciais com [cliente], identificamos..." />
                   </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className={L}>Tabela de contexto</label>
-                      {addBtn(addCtxRow, "+ Linha")}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {form.contexto_rows.map((row, i) => (
-                        <div key={i} className="flex gap-2 items-center">
-                          <input value={row.label} onChange={(e) => setCtxRow(i, "label", e.target.value)} className={`${I} w-48 flex-shrink-0`} placeholder="Label (ex: Profissional)" />
-                          <input value={row.valor} onChange={(e) => setCtxRow(i, "valor", e.target.value)} className={`${I} flex-1`} placeholder="Valor" />
-                          {form.contexto_rows.length > 1 && removeBtn(() => removeCtxRow(i))}
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    {form.contexto_rows.map((row, i) => (
+                      <div key={row.label} className="flex gap-3 items-center">
+                        <span className="text-xs flex-shrink-0 w-44 text-right" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{row.label}</span>
+                        <input value={row.valor} onChange={(e) => setCtxRow(i, "valor", e.target.value)} className={`${I} flex-1`} placeholder={row.label} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -742,16 +729,12 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
                 </div>
 
                 {/* 6.1 Condições de pagamento */}
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>6.1 Condições de Pagamento</p>
-                  {addBtn(addCondicao, "+ Linha")}
-                </div>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#2E9BAF", fontFamily: "var(--font-inter), sans-serif" }}>6.1 Condições de Pagamento</p>
                 <div className="flex flex-col gap-2">
                   {form.condicoes_pagamento.map((row, i) => (
-                    <div key={i} className="flex gap-2 items-center">
-                      <input value={row.item} onChange={(e) => setCondicao(i, "item", e.target.value)} className={`${I} w-48 flex-shrink-0`} placeholder="Item (ex: Pagamento de start)" />
-                      <input value={row.descricao} onChange={(e) => setCondicao(i, "descricao", e.target.value)} className={`${I} flex-1`} placeholder="Descrição" />
-                      {form.condicoes_pagamento.length > 1 && removeBtn(() => removeCondicao(i))}
+                    <div key={row.item} className="flex gap-3 items-center">
+                      <span className="text-xs flex-shrink-0 w-44 text-right" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>{row.item}</span>
+                      <input value={row.descricao} onChange={(e) => setCondicao(i, "descricao", e.target.value)} className={`${I} flex-1`} placeholder={row.item} />
                     </div>
                   ))}
                 </div>
