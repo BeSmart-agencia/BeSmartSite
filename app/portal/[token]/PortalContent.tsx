@@ -299,6 +299,9 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
 
   const defaultAba: Aba = propostaPendente ? "proposta" : propostaAprovada ? "projeto" : temProposta ? "proposta" : "projeto";
   const [abaAtiva, setAbaAtiva] = useState<Aba>(defaultAba);
+  const [expandedPropostas, setExpandedPropostas] = useState<Set<string>>(new Set());
+  const toggleProposta = (id: string) =>
+    setExpandedPropostas(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
   const projetoEtapas = etapas.filter((e) => e.projeto_id === projetoAtivo);
   const projetoItens = itens.filter((i) => i.projeto_id === projetoAtivo);
@@ -591,9 +594,42 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
 
             const isAprovada = proposta.status === "aprovada" || propostaAprovada;
             const isRecusada = proposta.status === "recusada";
+            const isOpen = expandedPropostas.has(proposta.id);
+
+            const statusLabel = isAprovada ? "Aceita" : isRecusada ? "Recusada" : "Aguardando resposta";
+            const statusColor = isAprovada ? "#4ADE80" : isRecusada ? "#6B7280" : "#FCD34D";
+            const statusBg = isAprovada ? "rgba(34,197,94,0.1)" : isRecusada ? "rgba(107,114,128,0.1)" : "rgba(252,211,77,0.1)";
 
             return (
-              <div key={proposta.id} className="flex flex-col gap-4">
+              <div key={proposta.id} className="flex flex-col gap-0 glass rounded-2xl overflow-hidden">
+
+                {/* HEADER COLAPSÁVEL */}
+                <button
+                  type="button"
+                  onClick={() => toggleProposta(proposta.id)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
+                  style={{ background: "transparent", border: "none", cursor: "pointer" }}
+                >
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-semibold text-white" style={{ fontFamily: F }}>
+                      {(pc.nome_sistema as string) || "Proposta"}
+                    </p>
+                    <span className="text-xs px-2 py-0.5 rounded-full inline-flex w-fit" style={{ background: statusBg, color: statusColor, fontFamily: F }}>
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <svg
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {/* CONTEÚDO EXPANDIDO */}
+                {isOpen && (
+                <div className="flex flex-col gap-4 px-4 pb-5 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
 
                 {/* CAPA */}
                 <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, rgba(155,107,181,0.18) 0%, rgba(46,155,175,0.12) 100%)", border: "1px solid rgba(155,107,181,0.3)" }}>
@@ -816,6 +852,8 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
                     planoB={pb ? { start: pb.start, mensalidade: pb.mensalidade, limite: pb.limite } : null}
                     planoRecomendado={(rec as "A" | "B") ?? "B"}
                   />
+                )}
+                </div>
                 )}
               </div>
             );
