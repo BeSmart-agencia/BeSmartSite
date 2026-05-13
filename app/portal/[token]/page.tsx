@@ -45,11 +45,8 @@ export default async function PortalPage({ params }: Props) {
       .order("created_at", { ascending: false }),
   ]);
 
-  // proposta ativa: aprovada primeiro, depois enviada, depois a mais recente
-  const propostaAtiva = propostasRows?.find(p => p.status === "aprovada")
-    ?? propostasRows?.find(p => p.status === "enviada")
-    ?? propostasRows?.[0]
-    ?? null;
+  // só mostra propostas enviadas, aprovadas ou recusadas (não rascunhos)
+  const propostasVisiveis = (propostasRows ?? []).filter(p => ["enviada", "aprovada", "recusada"].includes(p.status));
 
   const projetoIds = projetos?.map((p) => p.id) ?? [];
 
@@ -87,9 +84,7 @@ export default async function PortalPage({ params }: Props) {
           itens={itens ?? []}
           chamados={chamados ?? []}
           diagnostico={diagnostico ?? null}
-          propostaId={propostaAtiva?.id ?? null}
-          propostaConteudo={(propostaAtiva?.conteudo as Record<string, unknown>) ?? null}
-          propostaStatus={propostaAtiva?.status ?? null}
+          propostas={propostasVisiveis as Array<{ id: string; conteudo: Record<string, unknown> | null; status: string }>}
         />
       </div>
     </div>

@@ -30,6 +30,8 @@ type Item = { id: string; projeto_id: string; descricao: string; concluido: bool
 type Chamado = { id: string; titulo: string; descricao: string | null; status: string; urgencia: string | null; prazo_resolucao: string | null; resposta: string | null; created_at: string };
 type Cliente = { id: string; nome: string; empresa: string };
 
+type PropostaPortal = { id: string; conteudo: Record<string, unknown> | null; status: string };
+
 type Props = {
   cliente: Cliente;
   projetos: Projeto[];
@@ -37,9 +39,7 @@ type Props = {
   itens: Item[];
   chamados: Chamado[];
   diagnostico: Diagnostico;
-  propostaId: string | null;
-  propostaConteudo: PropostaConteudo | null;
-  propostaStatus: string | null;
+  propostas: PropostaPortal[];
 };
 
 function statusCor(s: string) {
@@ -266,19 +266,36 @@ function RespostaProposta({ clienteId, propostaId, planoA, planoB, planoRecomend
   );
 }
 
+// ── Helpers de layout de proposta ────────────────────────────────────────────
+
+function SectionBadge({ n, label, color }: { n: string; label: string; color: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-5">
+      <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: `${color}20`, color, fontFamily: "var(--font-inter), sans-serif" }}>{n}</span>
+      <p className="text-sm font-bold uppercase tracking-wider" style={{ color, fontFamily: "var(--font-inter), sans-serif" }}>{label}</p>
+    </div>
+  );
+}
+
+function CheckIcon({ color }: { color: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>
+  );
+}
+
 // ── Portal principal ──────────────────────────────────────────────────────────
 
 type Aba = "projeto" | "proposta" | "chamados";
 
 const APROVADOS = ["Aprovado", "Em desenvolvimento", "Entregue"];
 
-export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico, propostaId, propostaConteudo, propostaStatus }: Props) {
+export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico, propostas }: Props) {
   const [projetoAtivo, setProjetoAtivo] = useState<string | null>(projetos[0]?.id ?? null);
   const projeto = projetos.find((p) => p.id === projetoAtivo) ?? null;
 
-  const propostaAprovada = propostaStatus === "aprovada" || APROVADOS.includes(projeto?.status ?? "");
-  const temProposta = !!(propostaConteudo);
-  const propostaPendente = temProposta && !propostaAprovada && propostaStatus !== "recusada";
+  const temProposta = propostas.length > 0;
+  const propostaAprovada = propostas.some(p => p.status === "aprovada") || APROVADOS.includes(projeto?.status ?? "");
+  const propostaPendente = propostas.some(p => p.status === "enviada") && !propostaAprovada;
 
   const defaultAba: Aba = propostaPendente ? "proposta" : propostaAprovada ? "projeto" : temProposta ? "proposta" : "projeto";
   const [abaAtiva, setAbaAtiva] = useState<Aba>(defaultAba);
@@ -537,270 +554,274 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
       )}
 
       {/* Aba Proposta */}
-      {abaAtiva === "proposta" && propostaConteudo && (() => {
-        const pc = propostaConteudo;
-        const F = "var(--font-inter), sans-serif";
-        const P = "var(--font-playfair), Georgia, serif";
-
-        let ctxRows: Array<{ label: string; valor: string }> = [];
-        if (Array.isArray(pc.contexto)) {
-          ctxRows = (pc.contexto as Array<{ label: string; valor: string }>).filter(r => r.valor);
-        } else if (pc.contexto && typeof pc.contexto === "object") {
-          const legacy = pc.contexto as Record<string, string>;
-          const map: Record<string, string> = { empresa: "Empresa", segmento: "Segmento", tempo_mercado: "Tempo de mercado", estrutura: "Estrutura", canais_venda: "Canais de venda", como_chegam_leads: "Como chegam leads", quem_atende: "Quem atende", controle_atual: "Controle atual", retrabalho: "Retrabalho" };
-          ctxRows = Object.entries(map).filter(([k]) => legacy[k]).map(([k, label]) => ({ label, valor: legacy[k] }));
-        }
-
-        const dores = (pc.dores as string[]) ?? [];
-        const modulos = ((pc.modulos as Array<{ titulo: string; itens: string[] }>) ?? []).filter(m => m.titulo);
-        const comoFunciona = ((pc.como_funciona as Array<{ passo: string; descricao: string }>) ?? []).filter(s => s.passo);
-        const diferenciais = (pc.diferenciais as string[]) ?? [];
-        const cronograma = ((pc.cronograma as Array<{ periodo: string; descricao: string }>) ?? []).filter(r => r.periodo);
-        const condicoes = ((pc.condicoes_pagamento as Array<{ item: string; descricao: string }>) ?? []).filter(r => r.descricao);
-        const proximos = (pc.proximos_passos as string[]) ?? [];
-        const pa = pc.plano_a as { valor?: number; extra_info?: string; beneficios?: string[] } | null;
-        const pb = pc.plano_b as { start?: number; mensalidade?: number; limite?: string; beneficios?: string[] } | null;
-        const rec = pc.plano_recomendado as string;
-
-        const SectionBadge = ({ n, label, color }: { n: string; label: string; color: string }) => (
-          <div className="flex items-center gap-2 mb-5">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: `${color}20`, color, fontFamily: F }}>{n}</span>
-            <p className="text-sm font-bold uppercase tracking-wider" style={{ color, fontFamily: F }}>{label}</p>
-          </div>
-        );
-
-        const Check = ({ color }: { color: string }) => (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12" /></svg>
-        );
-
-        return (
-          <div className="flex flex-col gap-4">
-
-            {/* CAPA */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, rgba(155,107,181,0.18) 0%, rgba(46,155,175,0.12) 100%)", border: "1px solid rgba(155,107,181,0.3)" }}>
-              <div className="px-6 pt-8 pb-6 text-center">
-                <p className="text-xs uppercase tracking-widest mb-3 font-medium" style={{ color: "#9B6BB5", fontFamily: F }}>Proposta Comercial</p>
-                <h1 className="text-4xl font-bold mb-2 leading-tight" style={{ color: "#fff", fontFamily: P }}>{(pc.nome_sistema as string) || cliente.empresa}</h1>
-                {pc.tagline && <p className="text-sm leading-relaxed mb-6" style={{ color: "#9CA3AF", fontFamily: F }}>{pc.tagline as string}</p>}
-                <div className="inline-flex flex-col items-center gap-1 rounded-xl px-6 py-3" style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <p className="text-xs uppercase tracking-wider" style={{ color: "#6B7280", fontFamily: F }}>Elaborada para</p>
-                  <p className="text-base font-bold text-white" style={{ fontFamily: F }}>{cliente.nome || cliente.empresa}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-6 px-6 py-3" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                {pc.data_emissao && <p className="text-xs" style={{ color: "#4B5563", fontFamily: F }}>{pc.data_emissao as string}</p>}
-                {(pc.validade_dias as number) > 0 && <p className="text-xs" style={{ color: "#4B5563", fontFamily: F }}>Válida por {pc.validade_dias as number} dias</p>}
-              </div>
+      {abaAtiva === "proposta" && (
+        <div className="flex flex-col gap-8">
+          {propostas.length === 0 && (
+            <div className="glass rounded-2xl p-10 text-center">
+              <p className="text-sm" style={{ color: "#6B7280", fontFamily: "var(--font-inter), sans-serif" }}>
+                Nenhuma proposta disponível.
+              </p>
             </div>
+          )}
+          {propostas.map((proposta) => {
+            const pc = proposta.conteudo as PropostaConteudo | null;
+            if (!pc) return null;
+            const F = "var(--font-inter), sans-serif";
+            const P = "var(--font-playfair), Georgia, serif";
 
-            {/* 1. CONTEXTO */}
-            {(pc.contexto_intro || ctxRows.length > 0) && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="1" label="Contexto e Diagnóstico" color="#9B6BB5" />
-                {pc.contexto_intro && <p className="text-sm leading-relaxed mb-4" style={{ color: "#C4B5D4", fontFamily: F }}>{pc.contexto_intro as string}</p>}
-                {ctxRows.length > 0 && (
-                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(155,107,181,0.15)" }}>
-                    {ctxRows.map((row, i) => (
-                      <div key={i} className="flex gap-3 px-4 py-3" style={{ borderBottom: i < ctxRows.length - 1 ? "1px solid rgba(155,107,181,0.08)" : "none", background: i % 2 === 0 ? "rgba(155,107,181,0.04)" : "transparent" }}>
-                        <span className="text-xs font-semibold flex-shrink-0" style={{ color: "#9B6BB5", fontFamily: F, minWidth: "140px" }}>{row.label}</span>
-                        <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.valor}</span>
+            let ctxRows: Array<{ label: string; valor: string }> = [];
+            if (Array.isArray(pc.contexto)) {
+              ctxRows = (pc.contexto as Array<{ label: string; valor: string }>).filter(r => r.valor);
+            } else if (pc.contexto && typeof pc.contexto === "object") {
+              const legacy = pc.contexto as Record<string, string>;
+              const legacyMap: Record<string, string> = { empresa: "Empresa", segmento: "Segmento", tempo_mercado: "Tempo de mercado", estrutura: "Estrutura", canais_venda: "Canais de venda", como_chegam_leads: "Como chegam leads", quem_atende: "Quem atende", controle_atual: "Controle atual", retrabalho: "Retrabalho" };
+              ctxRows = Object.entries(legacyMap).filter(([k]) => legacy[k]).map(([k, label]) => ({ label, valor: legacy[k] }));
+            }
+
+            const dores = (pc.dores as string[]) ?? [];
+            const modulos = ((pc.modulos as Array<{ titulo: string; itens: string[] }>) ?? []).filter(m => m.titulo);
+            const comoFunciona = ((pc.como_funciona as Array<{ passo: string; descricao: string }>) ?? []).filter(s => s.passo);
+            const diferenciais = (pc.diferenciais as string[]) ?? [];
+            const cronograma = ((pc.cronograma as Array<{ periodo: string; descricao: string }>) ?? []).filter(r => r.periodo);
+            const condicoes = ((pc.condicoes_pagamento as Array<{ item: string; descricao: string }>) ?? []).filter(r => r.descricao);
+            const proximos = (pc.proximos_passos as string[]) ?? [];
+            const pa = pc.plano_a as { valor?: number; extra_info?: string; beneficios?: string[] } | null;
+            const pb = pc.plano_b as { start?: number; mensalidade?: number; limite?: string; beneficios?: string[] } | null;
+            const rec = pc.plano_recomendado as string;
+
+            const isAprovada = proposta.status === "aprovada" || propostaAprovada;
+            const isRecusada = proposta.status === "recusada";
+
+            return (
+              <div key={proposta.id} className="flex flex-col gap-4">
+
+                {/* CAPA */}
+                <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, rgba(155,107,181,0.18) 0%, rgba(46,155,175,0.12) 100%)", border: "1px solid rgba(155,107,181,0.3)" }}>
+                  <div className="px-6 pt-8 pb-6 text-center">
+                    <p className="text-xs uppercase tracking-widest mb-3 font-medium" style={{ color: "#9B6BB5", fontFamily: F }}>Proposta Comercial</p>
+                    <h1 className="text-4xl font-bold mb-2 leading-tight" style={{ color: "#fff", fontFamily: P }}>{(pc.nome_sistema as string) || cliente.empresa}</h1>
+                    {pc.tagline && <p className="text-sm leading-relaxed mb-6" style={{ color: "#9CA3AF", fontFamily: F }}>{pc.tagline as string}</p>}
+                    <div className="inline-flex flex-col items-center gap-1 rounded-xl px-6 py-3" style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <p className="text-xs uppercase tracking-wider" style={{ color: "#6B7280", fontFamily: F }}>Elaborada para</p>
+                      <p className="text-base font-bold text-white" style={{ fontFamily: F }}>{cliente.nome || cliente.empresa}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-6 px-6 py-3" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                    {pc.data_emissao && <p className="text-xs" style={{ color: "#4B5563", fontFamily: F }}>{pc.data_emissao as string}</p>}
+                    {(pc.validade_dias as number) > 0 && <p className="text-xs" style={{ color: "#4B5563", fontFamily: F }}>Válida por {pc.validade_dias as number} dias</p>}
+                  </div>
+                </div>
+
+                {/* 1. CONTEXTO */}
+                {(pc.contexto_intro || ctxRows.length > 0) && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="1" label="Contexto e Diagnóstico" color="#9B6BB5" />
+                    {pc.contexto_intro && <p className="text-sm leading-relaxed mb-4" style={{ color: "#C4B5D4", fontFamily: F }}>{pc.contexto_intro as string}</p>}
+                    {ctxRows.length > 0 && (
+                      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(155,107,181,0.15)" }}>
+                        {ctxRows.map((row, i) => (
+                          <div key={i} className="flex gap-3 px-4 py-3" style={{ borderBottom: i < ctxRows.length - 1 ? "1px solid rgba(155,107,181,0.08)" : "none", background: i % 2 === 0 ? "rgba(155,107,181,0.04)" : "transparent" }}>
+                            <span className="text-xs font-semibold flex-shrink-0" style={{ color: "#9B6BB5", fontFamily: F, minWidth: "140px" }}>{row.label}</span>
+                            <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.valor}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* 1.1 NECESSIDADES */}
-            {dores.length > 0 && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="1.1" label={(pc.necessidades_titulo as string) || "Principais Necessidades"} color="#9B6BB5" />
-                <div className="flex flex-col gap-2">
-                  {dores.map((d, i) => (
-                    <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.1)" }}>
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: "#9B6BB5" }} />
-                      <p className="text-sm" style={{ color: "#D1D5DB", fontFamily: F }}>{d}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 2. SOLUÇÃO */}
-            {(pc.solucao_descricao || modulos.length > 0) && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="2" label="A Solução" color="#2E9BAF" />
-                {pc.solucao_descricao && <p className="text-sm leading-relaxed mb-4" style={{ color: "#C4D9DD", fontFamily: F }}>{pc.solucao_descricao as string}</p>}
-                {modulos.length > 0 && (
-                  <div className="flex flex-col gap-3">
-                    {modulos.map((m, i) => (
-                      <div key={i} className="rounded-xl p-4" style={{ background: "rgba(46,155,175,0.05)", border: "1px solid rgba(46,155,175,0.15)" }}>
-                        <p className="text-sm font-bold mb-2" style={{ color: "#2E9BAF", fontFamily: F }}>{m.titulo}</p>
-                        <div className="flex flex-col gap-1">
-                          {m.itens.map((item, j) => (
-                            <div key={j} className="flex items-start gap-2">
-                              <Check color="#2E9BAF" />
-                              <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{item}</span>
-                            </div>
-                          ))}
+                {/* 1.1 NECESSIDADES */}
+                {dores.length > 0 && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="1.1" label={(pc.necessidades_titulo as string) || "Principais Necessidades"} color="#9B6BB5" />
+                    <div className="flex flex-col gap-2">
+                      {dores.map((d, i) => (
+                        <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.1)" }}>
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: "#9B6BB5" }} />
+                          <p className="text-sm" style={{ color: "#D1D5DB", fontFamily: F }}>{d}</p>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* 3. COMO FUNCIONA */}
-            {comoFunciona.length > 0 && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="3" label="Como funciona na prática" color="#2E9BAF" />
-                <div className="flex flex-col gap-3">
-                  {comoFunciona.map((s, i) => (
-                    <div key={i} className="flex gap-3 items-start rounded-xl p-4" style={{ background: "rgba(46,155,175,0.05)", border: "1px solid rgba(46,155,175,0.12)" }}>
-                      <span className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: F }}>{i + 1}</span>
-                      <div className="flex flex-col gap-0.5 pt-0.5">
-                        <p className="text-sm font-semibold" style={{ color: "#fff", fontFamily: F }}>{s.passo}</p>
-                        {s.descricao && <p className="text-xs" style={{ color: "#9CA3AF", fontFamily: F }}>{s.descricao}</p>}
+                {/* 2. SOLUÇÃO */}
+                {(pc.solucao_descricao || modulos.length > 0) && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="2" label="A Solução" color="#2E9BAF" />
+                    {pc.solucao_descricao && <p className="text-sm leading-relaxed mb-4" style={{ color: "#C4D9DD", fontFamily: F }}>{pc.solucao_descricao as string}</p>}
+                    {modulos.length > 0 && (
+                      <div className="flex flex-col gap-3">
+                        {modulos.map((m, i) => (
+                          <div key={i} className="rounded-xl p-4" style={{ background: "rgba(46,155,175,0.05)", border: "1px solid rgba(46,155,175,0.15)" }}>
+                            <p className="text-sm font-bold mb-2" style={{ color: "#2E9BAF", fontFamily: F }}>{m.titulo}</p>
+                            <div className="flex flex-col gap-1">
+                              {m.itens.map((item, j) => (
+                                <div key={j} className="flex items-start gap-2">
+                                  <CheckIcon color="#2E9BAF" />
+                                  <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    )}
+                  </div>
+                )}
 
-            {/* 4. DIFERENCIAIS */}
-            {diferenciais.length > 0 && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="4" label="Diferenciais" color="#9B6BB5" />
-                <div className="flex flex-col gap-2">
-                  {diferenciais.map((d, i) => (
-                    <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.1)" }}>
-                      <Check color="#9B6BB5" />
-                      <p className="text-sm" style={{ color: "#D1D5DB", fontFamily: F }} dangerouslySetInnerHTML={{ __html: d.replace(/^([^:]+:)/, '<strong style="color:#C4B5D4">$1</strong>') }} />
+                {/* 3. COMO FUNCIONA */}
+                {comoFunciona.length > 0 && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="3" label="Como funciona na prática" color="#2E9BAF" />
+                    <div className="flex flex-col gap-3">
+                      {comoFunciona.map((s, i) => (
+                        <div key={i} className="flex gap-3 items-start rounded-xl p-4" style={{ background: "rgba(46,155,175,0.05)", border: "1px solid rgba(46,155,175,0.12)" }}>
+                          <span className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: F }}>{i + 1}</span>
+                          <div className="flex flex-col gap-0.5 pt-0.5">
+                            <p className="text-sm font-semibold" style={{ color: "#fff", fontFamily: F }}>{s.passo}</p>
+                            {s.descricao && <p className="text-xs" style={{ color: "#9CA3AF", fontFamily: F }}>{s.descricao}</p>}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
+                )}
 
-            {/* 5. PLANOS */}
-            {(pa?.valor || pb?.start) && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="5" label="Planos e Valores" color="#9B6BB5" />
-                <div className="flex flex-col gap-3 mb-4">
-                  {pa && (
-                    <div className="rounded-2xl p-5" style={{ background: rec === "A" ? "rgba(155,107,181,0.10)" : "rgba(255,255,255,0.03)", border: rec === "A" ? "2px solid rgba(155,107,181,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#9B6BB5", fontFamily: F }}>Plano A — Exclusivo</p>
-                        {rec === "A" && <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ background: "rgba(155,107,181,0.2)", color: "#9B6BB5", fontFamily: F }}>★ Recomendado</span>}
-                      </div>
-                      {pa.valor ? <p className="text-3xl font-bold mb-1" style={{ color: "#fff", fontFamily: P }}>R$ {pa.valor.toLocaleString("pt-BR")}</p> : null}
-                      {pa.extra_info && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: F }}>{pa.extra_info}</p>}
-                      <div className="flex flex-col gap-1.5">{(pa.beneficios ?? []).map((b, i) => (<div key={i} className="flex items-start gap-2"><Check color="#9B6BB5" /><span className="text-xs" style={{ color: "#C4B5D4", fontFamily: F }}>{b}</span></div>))}</div>
+                {/* 4. DIFERENCIAIS */}
+                {diferenciais.length > 0 && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="4" label="Diferenciais" color="#9B6BB5" />
+                    <div className="flex flex-col gap-2">
+                      {diferenciais.map((d, i) => (
+                        <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.1)" }}>
+                          <CheckIcon color="#9B6BB5" />
+                          <p className="text-sm" style={{ color: "#D1D5DB", fontFamily: F }} dangerouslySetInnerHTML={{ __html: d.replace(/^([^:]+:)/, '<strong style="color:#C4B5D4">$1</strong>') }} />
+                        </div>
+                      ))}
                     </div>
-                  )}
-                  {pb && (
-                    <div className="rounded-2xl p-5" style={{ background: rec === "B" ? "rgba(46,155,175,0.08)" : "rgba(255,255,255,0.03)", border: rec === "B" ? "2px solid rgba(46,155,175,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: F }}>Plano B — Mensalidade</p>
-                        {rec === "B" && <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: F }}>★ Recomendado</span>}
-                      </div>
-                      {(pb.start || pb.mensalidade) && (
-                        <div className="flex items-baseline gap-2 mb-1 flex-wrap">
-                          <p className="text-2xl font-bold" style={{ color: "#fff", fontFamily: P }}>Start: R$ {(pb.start ?? 0).toLocaleString("pt-BR")}</p>
-                          <p className="text-base font-semibold" style={{ color: "#2E9BAF", fontFamily: F }}>+ R$ {(pb.mensalidade ?? 0).toLocaleString("pt-BR")}/mês</p>
+                  </div>
+                )}
+
+                {/* 5. PLANOS */}
+                {(pa?.valor || pb?.start) && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="5" label="Planos e Valores" color="#9B6BB5" />
+                    <div className="flex flex-col gap-3 mb-4">
+                      {pa && (
+                        <div className="rounded-2xl p-5" style={{ background: rec === "A" ? "rgba(155,107,181,0.10)" : "rgba(255,255,255,0.03)", border: rec === "A" ? "2px solid rgba(155,107,181,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#9B6BB5", fontFamily: F }}>Plano A — Exclusivo</p>
+                            {rec === "A" && <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ background: "rgba(155,107,181,0.2)", color: "#9B6BB5", fontFamily: F }}>★ Recomendado</span>}
+                          </div>
+                          {pa.valor ? <p className="text-3xl font-bold mb-1" style={{ color: "#fff", fontFamily: P }}>R$ {pa.valor.toLocaleString("pt-BR")}</p> : null}
+                          {pa.extra_info && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: F }}>{pa.extra_info}</p>}
+                          <div className="flex flex-col gap-1.5">{(pa.beneficios ?? []).map((b, bi) => (<div key={bi} className="flex items-start gap-2"><CheckIcon color="#9B6BB5" /><span className="text-xs" style={{ color: "#C4B5D4", fontFamily: F }}>{b}</span></div>))}</div>
                         </div>
                       )}
-                      {pb.limite && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: F }}>{pb.limite}</p>}
-                      <div className="flex flex-col gap-1.5">{(pb.beneficios ?? []).map((b, i) => (<div key={i} className="flex items-start gap-2"><Check color="#2E9BAF" /><span className="text-xs" style={{ color: "#C4D9DD", fontFamily: F }}>{b}</span></div>))}</div>
+                      {pb && (
+                        <div className="rounded-2xl p-5" style={{ background: rec === "B" ? "rgba(46,155,175,0.08)" : "rgba(255,255,255,0.03)", border: rec === "B" ? "2px solid rgba(46,155,175,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2E9BAF", fontFamily: F }}>Plano B — Mensalidade</p>
+                            {rec === "B" && <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: F }}>★ Recomendado</span>}
+                          </div>
+                          {(pb.start || pb.mensalidade) && (
+                            <div className="flex items-baseline gap-2 mb-1 flex-wrap">
+                              <p className="text-2xl font-bold" style={{ color: "#fff", fontFamily: P }}>Start: R$ {(pb.start ?? 0).toLocaleString("pt-BR")}</p>
+                              <p className="text-base font-semibold" style={{ color: "#2E9BAF", fontFamily: F }}>+ R$ {(pb.mensalidade ?? 0).toLocaleString("pt-BR")}/mês</p>
+                            </div>
+                          )}
+                          {pb.limite && <p className="text-xs mb-3" style={{ color: "#6B7280", fontFamily: F }}>{pb.limite}</p>}
+                          <div className="flex flex-col gap-1.5">{(pb.beneficios ?? []).map((b, bi) => (<div key={bi} className="flex items-start gap-2"><CheckIcon color="#2E9BAF" /><span className="text-xs" style={{ color: "#C4D9DD", fontFamily: F }}>{b}</span></div>))}</div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                {pc.plano_recomendacao_texto && (
-                  <div className="rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.06)", border: "1px solid rgba(155,107,181,0.15)" }}>
-                    <p className="text-sm leading-relaxed italic" style={{ color: "#C4B5D4", fontFamily: F }}>{pc.plano_recomendacao_texto as string}</p>
+                    {pc.plano_recomendacao_texto && (
+                      <div className="rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.06)", border: "1px solid rgba(155,107,181,0.15)" }}>
+                        <p className="text-sm leading-relaxed italic" style={{ color: "#C4B5D4", fontFamily: F }}>{pc.plano_recomendacao_texto as string}</p>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* 6. CRONOGRAMA */}
-            {cronograma.length > 0 && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="6" label="Cronograma de Desenvolvimento" color="#2E9BAF" />
-                <div className="flex flex-col gap-0 rounded-xl overflow-hidden mb-5" style={{ border: "1px solid rgba(46,155,175,0.15)" }}>
-                  {cronograma.map((row, i) => (
-                    <div key={i} className="flex gap-3 px-4 py-3" style={{ borderBottom: i < cronograma.length - 1 ? "1px solid rgba(46,155,175,0.08)" : "none", background: i % 2 === 0 ? "rgba(46,155,175,0.04)" : "transparent" }}>
-                      <span className="text-xs font-bold flex-shrink-0" style={{ color: "#2E9BAF", fontFamily: F, minWidth: "120px" }}>{row.periodo}</span>
-                      <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
-                    </div>
-                  ))}
-                </div>
-                {condicoes.length > 0 && (
-                  <>
-                    <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#2E9BAF", fontFamily: F }}>6.1 Condições de Pagamento</p>
-                    <div className="flex flex-col gap-0 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(46,155,175,0.15)" }}>
-                      {condicoes.map((row, i) => (
-                        <div key={i} className="flex gap-3 px-4 py-3" style={{ borderBottom: i < condicoes.length - 1 ? "1px solid rgba(46,155,175,0.08)" : "none", background: i % 2 === 0 ? "rgba(46,155,175,0.04)" : "transparent" }}>
-                          <span className="text-xs font-semibold flex-shrink-0" style={{ color: "#9CA3AF", fontFamily: F, minWidth: "160px" }}>{row.item}</span>
+                {/* 6. CRONOGRAMA */}
+                {cronograma.length > 0 && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="6" label="Cronograma de Desenvolvimento" color="#2E9BAF" />
+                    <div className="flex flex-col gap-0 rounded-xl overflow-hidden mb-5" style={{ border: "1px solid rgba(46,155,175,0.15)" }}>
+                      {cronograma.map((row, i) => (
+                        <div key={i} className="flex gap-3 px-4 py-3" style={{ borderBottom: i < cronograma.length - 1 ? "1px solid rgba(46,155,175,0.08)" : "none", background: i % 2 === 0 ? "rgba(46,155,175,0.04)" : "transparent" }}>
+                          <span className="text-xs font-bold flex-shrink-0" style={{ color: "#2E9BAF", fontFamily: F, minWidth: "120px" }}>{row.periodo}</span>
                           <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
                         </div>
                       ))}
                     </div>
-                  </>
+                    {condicoes.length > 0 && (
+                      <>
+                        <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#2E9BAF", fontFamily: F }}>6.1 Condições de Pagamento</p>
+                        <div className="flex flex-col gap-0 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(46,155,175,0.15)" }}>
+                          {condicoes.map((row, i) => (
+                            <div key={i} className="flex gap-3 px-4 py-3" style={{ borderBottom: i < condicoes.length - 1 ? "1px solid rgba(46,155,175,0.08)" : "none", background: i % 2 === 0 ? "rgba(46,155,175,0.04)" : "transparent" }}>
+                              <span className="text-xs font-semibold flex-shrink-0" style={{ color: "#9CA3AF", fontFamily: F, minWidth: "160px" }}>{row.item}</span>
+                              <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
 
-            {/* 7. PRÓXIMOS PASSOS */}
-            {proximos.length > 0 && (
-              <div className="glass rounded-2xl p-5">
-                <SectionBadge n="7" label="Próximos Passos" color="#9B6BB5" />
-                <div className="flex flex-col gap-2">
-                  {proximos.map((p, i) => (
-                    <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.1)" }}>
-                      <span className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold" style={{ background: "rgba(155,107,181,0.2)", color: "#9B6BB5", fontFamily: F }}>{i + 1}</span>
-                      <p className="text-sm pt-0.5" style={{ color: "#D1D5DB", fontFamily: F }}>{p}</p>
+                {/* 7. PRÓXIMOS PASSOS */}
+                {proximos.length > 0 && (
+                  <div className="glass rounded-2xl p-5">
+                    <SectionBadge n="7" label="Próximos Passos" color="#9B6BB5" />
+                    <div className="flex flex-col gap-2">
+                      {proximos.map((step, i) => (
+                        <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(155,107,181,0.05)", border: "1px solid rgba(155,107,181,0.1)" }}>
+                          <span className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold" style={{ background: "rgba(155,107,181,0.2)", color: "#9B6BB5", fontFamily: F }}>{i + 1}</span>
+                          <p className="text-sm pt-0.5" style={{ color: "#D1D5DB", fontFamily: F }}>{step}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                {(pc.validade_dias as number) > 0 && (
-                  <p className="text-xs mt-4 text-center" style={{ color: "#4B5563", fontFamily: F }}>Esta proposta tem validade de {pc.validade_dias as number} dias.</p>
+                    {(pc.validade_dias as number) > 0 && (
+                      <p className="text-xs mt-4 text-center" style={{ color: "#4B5563", fontFamily: F }}>Esta proposta tem validade de {pc.validade_dias as number} dias.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* CLOSING */}
+                {pc.tagline_final && (
+                  <div className="rounded-2xl p-8 text-center" style={{ background: "linear-gradient(145deg, rgba(155,107,181,0.12), rgba(46,155,175,0.08))", border: "1px solid rgba(155,107,181,0.2)" }}>
+                    <p className="text-2xl font-bold mb-2" style={{ color: "#fff", fontFamily: P }}>{pc.nome_sistema as string}</p>
+                    <p className="text-sm italic" style={{ color: "#9CA3AF", fontFamily: F }}>{pc.tagline_final as string}</p>
+                  </div>
+                )}
+
+                {/* CTA */}
+                {isAprovada ? (
+                  <div className="rounded-2xl p-5 flex items-center justify-center gap-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <p className="text-base font-bold" style={{ color: "#4ADE80", fontFamily: F }}>Proposta aceita</p>
+                  </div>
+                ) : isRecusada ? (
+                  <div className="rounded-2xl p-5 text-center" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
+                    <p className="text-sm" style={{ color: "#6B7280", fontFamily: F }}>Proposta recusada. Entre em contato se quiser conversar.</p>
+                  </div>
+                ) : (
+                  <RespostaProposta
+                    clienteId={cliente.id}
+                    propostaId={proposta.id}
+                    planoA={pa ? { valor: pa.valor, extra_info: pa.extra_info } : null}
+                    planoB={pb ? { start: pb.start, mensalidade: pb.mensalidade, limite: pb.limite } : null}
+                    planoRecomendado={(rec as "A" | "B") ?? "B"}
+                  />
                 )}
               </div>
-            )}
-
-            {/* CLOSING */}
-            {pc.tagline_final && (
-              <div className="rounded-2xl p-8 text-center" style={{ background: "linear-gradient(145deg, rgba(155,107,181,0.12), rgba(46,155,175,0.08))", border: "1px solid rgba(155,107,181,0.2)" }}>
-                <p className="text-2xl font-bold mb-2" style={{ color: "#fff", fontFamily: P }}>{pc.nome_sistema as string}</p>
-                <p className="text-sm italic" style={{ color: "#9CA3AF", fontFamily: F }}>{pc.tagline_final as string}</p>
-              </div>
-            )}
-
-            {/* CTA */}
-            {propostaAprovada ? (
-              <div className="rounded-2xl p-5 flex items-center justify-center gap-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <p className="text-base font-bold" style={{ color: "#4ADE80", fontFamily: F }}>Proposta aceita</p>
-              </div>
-            ) : propostaStatus === "recusada" ? (
-              <div className="rounded-2xl p-5 text-center" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
-                <p className="text-sm" style={{ color: "#6B7280", fontFamily: F }}>Proposta recusada. Entre em contato se quiser conversar.</p>
-              </div>
-            ) : (
-              <RespostaProposta
-                clienteId={cliente.id}
-                propostaId={propostaId}
-                planoA={pa ? { valor: pa.valor, extra_info: pa.extra_info } : null}
-                planoB={pb ? { start: pb.start, mensalidade: pb.mensalidade, limite: pb.limite } : null}
-                planoRecomendado={(rec as "A" | "B") ?? "B"}
-              />
-            )}
-          </div>
-        );
-      })()}
+            );
+          })}
+        </div>
+      )}
 
       {/* Aba Suporte */}
       {abaAtiva === "chamados" && (
