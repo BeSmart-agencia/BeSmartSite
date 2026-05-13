@@ -1,14 +1,20 @@
 import { supabase } from "@/app/lib/supabase";
 import Link from "next/link";
-import { PipelineBoard } from "./PipelineBoard";
+import { PipelineBoard, type PropostaEnviada } from "./PipelineBoard";
 
 function PlusIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>; }
 
 export default async function PipelinePage() {
-  const { data: projetos } = await supabase
-    .from("projetos")
-    .select("id, nome, status, valor_total, prazo_entrega, cliente_id, clientes(empresa, nome)")
-    .order("created_at", { ascending: false });
+  const [{ data: projetos }, { data: propostasEnviadas }] = await Promise.all([
+    supabase
+      .from("projetos")
+      .select("id, nome, status, valor_total, prazo_entrega, cliente_id, clientes(empresa, nome)")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("propostas")
+      .select("id, cliente_id, status, created_at, conteudo, clientes(empresa, nome)")
+      .eq("status", "enviada"),
+  ]);
 
   return (
     <div className="p-6 md:p-8">
@@ -29,7 +35,7 @@ export default async function PipelinePage() {
 
       <div style={{ overflowX: "auto", paddingBottom: "16px" }}>
         <div style={{ minWidth: "1100px" }}>
-          <PipelineBoard projetos={projetos ?? []} />
+          <PipelineBoard projetos={projetos ?? []} propostasEnviadas={(propostasEnviadas ?? []) as PropostaEnviada[]} />
         </div>
       </div>
     </div>

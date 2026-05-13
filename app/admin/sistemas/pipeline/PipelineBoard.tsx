@@ -14,6 +14,15 @@ type Projeto = {
   clientes: { empresa: string; nome: string } | { empresa: string; nome: string }[] | null;
 };
 
+export type PropostaEnviada = {
+  id: string;
+  cliente_id: string;
+  status: string;
+  created_at: string;
+  conteudo: Record<string, unknown> | null;
+  clientes: { empresa: string; nome: string } | { empresa: string; nome: string }[] | null;
+};
+
 const COLUNAS = [
   { status: "Em diagnóstico", short: "Diagnóstico", color: "#9CA3AF", border: "rgba(107,114,128,0.25)", bg: "rgba(107,114,128,0.06)" },
   { status: "Proposta enviada", short: "Proposta", color: "#FCD34D", border: "rgba(251,191,36,0.25)", bg: "rgba(251,191,36,0.05)" },
@@ -41,6 +50,32 @@ function fmt(d: string) {
 }
 
 function ArrowRightIcon() { return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>; }
+
+function PropostaCard({ proposta }: { proposta: PropostaEnviada }) {
+  const empresa = (Array.isArray(proposta.clientes) ? proposta.clientes[0]?.empresa : proposta.clientes?.empresa) ?? "—";
+  const nomeSistema = proposta.conteudo?.nome_sistema as string | undefined;
+  const F = "var(--font-inter), sans-serif";
+  return (
+    <div
+      className="rounded-xl p-3.5 flex flex-col gap-2 transition-all hover:translate-y-[-1px]"
+      style={{ background: "rgba(251,191,36,0.04)", border: "1px solid rgba(251,191,36,0.15)" }}
+    >
+      <Link
+        href={`/admin/sistemas/clientes/${proposta.cliente_id}`}
+        className="font-semibold text-sm leading-tight text-white hover:text-yellow-300 transition-colors"
+        style={{ fontFamily: F, textDecoration: "none" }}
+      >
+        {empresa}
+      </Link>
+      {nomeSistema && (
+        <p className="text-xs" style={{ color: "#9CA3AF", fontFamily: F }}>{nomeSistema}</p>
+      )}
+      <span className="text-xs px-2 py-0.5 rounded-full w-fit" style={{ background: "rgba(251,191,36,0.1)", color: "#FCD34D", border: "1px solid rgba(251,191,36,0.2)", fontFamily: F }}>
+        Aguardando resposta
+      </span>
+    </div>
+  );
+}
 
 function ProjetoCard({ projeto, onStatusChange }: { projeto: Projeto; onStatusChange: (id: string, status: string, clienteId: string) => void }) {
   const nexts = NEXT_STATUS[projeto.status] ?? [];
@@ -92,7 +127,7 @@ function ProjetoCard({ projeto, onStatusChange }: { projeto: Projeto; onStatusCh
   );
 }
 
-export function PipelineBoard({ projetos }: { projetos: Projeto[] }) {
+export function PipelineBoard({ projetos, propostasEnviadas }: { projetos: Projeto[]; propostasEnviadas: PropostaEnviada[] }) {
   const router = useRouter();
 
   async function handleStatusChange(id: string, status: string, clienteId: string) {
@@ -103,7 +138,9 @@ export function PipelineBoard({ projetos }: { projetos: Projeto[] }) {
   return (
     <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${COLUNAS.length}, minmax(180px, 1fr))`, overflowX: "auto" }}>
       {COLUNAS.map(({ status, short, color, border, bg }) => {
-        const col = projetos.filter((p) => p.status === status);
+        const projCol = projetos.filter((p) => p.status === status);
+        const propCol = status === "Proposta enviada" ? propostasEnviadas : [];
+        const total = projCol.length + propCol.length;
         return (
           <div key={status} className="flex flex-col gap-3 min-w-[180px]">
             {/* Column header */}
@@ -118,15 +155,18 @@ export function PipelineBoard({ projetos }: { projetos: Projeto[] }) {
                 className="text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center"
                 style={{ background: `${color}22`, color, fontFamily: "var(--font-inter), sans-serif" }}
               >
-                {col.length}
+                {total}
               </span>
             </div>
             {/* Cards */}
             <div className="flex flex-col gap-2">
-              {col.map((p) => (
+              {propCol.map((p) => (
+                <PropostaCard key={p.id} proposta={p} />
+              ))}
+              {projCol.map((p) => (
                 <ProjetoCard key={p.id} projeto={p} onStatusChange={handleStatusChange} />
               ))}
-              {col.length === 0 && (
+              {total === 0 && (
                 <div
                   className="rounded-xl py-6 text-center text-xs"
                   style={{ border: "1px dashed rgba(255,255,255,0.07)", color: "#374151", fontFamily: "var(--font-inter), sans-serif" }}

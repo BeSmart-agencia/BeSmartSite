@@ -28,12 +28,14 @@ async function getData() {
       { data: parcelas },
       { data: chamados },
       { data: mensalidades },
+      { data: propostasEnviadas },
     ] = await Promise.all([
       supabase.from("clientes").select("id, nome, empresa, status, created_at").order("created_at", { ascending: false }),
       supabase.from("projetos").select("id, status, cliente_id, nome, valor_total, prazo_entrega, clientes(empresa)"),
       supabase.from("parcelas").select("valor, status"),
       supabase.from("chamados").select("id, status"),
       supabase.from("mensalidades").select("valor, status"),
+      supabase.from("propostas").select("id, cliente_id, status").eq("status", "enviada"),
     ]);
 
     const totalClientes = clientes?.length ?? 0;
@@ -45,22 +47,24 @@ async function getData() {
       .filter((m) => m.status === "pendente")
       .reduce((s, m) => s + Number(m.valor), 0);
     const chamadosAbertos = (chamados ?? []).filter((c) => c.status === "aberto").length;
+    const propostasEnviadasCount = propostasEnviadas?.length ?? 0;
 
     return {
       clientes: clientes ?? [],
       projetos: projetos ?? [],
+      propostasEnviadasCount,
       totalClientes,
       projAtivos,
       aReceber: aReceber + mensAReceber,
       chamadosAbertos,
     };
   } catch {
-    return { clientes: [], projetos: [], totalClientes: 0, projAtivos: 0, aReceber: 0, chamadosAbertos: 0 };
+    return { clientes: [], projetos: [], propostasEnviadasCount: 0, totalClientes: 0, projAtivos: 0, aReceber: 0, chamadosAbertos: 0 };
   }
 }
 
 export default async function DashboardPage() {
-  const { clientes, projetos, totalClientes, projAtivos, aReceber, chamadosAbertos } = await getData();
+  const { clientes, projetos, propostasEnviadasCount, totalClientes, projAtivos, aReceber, chamadosAbertos } = await getData();
 
   const stats = [
     { label: "Clientes Cadastrados", value: totalClientes, icon: <UsersIcon />, color: "#9B6BB5" },
@@ -110,7 +114,8 @@ export default async function DashboardPage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {PIPELINE_COLS.map(({ status, color, bg }) => {
-            const count = projetos.filter((p) => p.status === status).length;
+            const projCount = projetos.filter((p) => p.status === status).length;
+            const count = status === "Proposta enviada" ? projCount + propostasEnviadasCount : projCount;
             return (
               <Link key={status} href={`/admin/sistemas/pipeline`} className="rounded-xl p-4 text-center transition-all hover:scale-105" style={{ background: bg, border: `1px solid ${color}22`, textDecoration: "none" }}>
                 <div className="text-2xl font-bold mb-1" style={{ color, fontFamily: "var(--font-playfair), Georgia, serif" }}>{count}</div>
