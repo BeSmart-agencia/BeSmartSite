@@ -16,13 +16,13 @@ export default async function PortalPage({ params }: Props) {
 
   const { data: cliente } = await supabase
     .from("clientes")
-    .select("id, nome, empresa, onboarding_token, proposta_conteudo, proposta_status")
+    .select("id, nome, empresa, onboarding_token")
     .eq("onboarding_token", token)
     .maybeSingle();
 
   if (!cliente) notFound();
 
-  const [{ data: projetos }, { data: diagnostico }, { data: chamadosAbertos }] = await Promise.all([
+  const [{ data: projetos }, { data: diagnostico }, { data: chamadosAbertos }, { data: propostasRows }] = await Promise.all([
     supabase
       .from("projetos")
       .select("id, nome, descricao, status, data_inicio, prazo_entrega, valor_total, forma_pagamento")
@@ -38,7 +38,18 @@ export default async function PortalPage({ params }: Props) {
       .select("id")
       .eq("cliente_id", cliente.id)
       .neq("status", "resolvido"),
+    supabase
+      .from("propostas")
+      .select("id, conteudo, status")
+      .eq("cliente_id", cliente.id)
+      .order("created_at", { ascending: false }),
   ]);
+
+  // proposta ativa: aprovada primeiro, depois enviada, depois a mais recente
+  const propostaAtiva = propostasRows?.find(p => p.status === "aprovada")
+    ?? propostasRows?.find(p => p.status === "enviada")
+    ?? propostasRows?.[0]
+    ?? null;
 
   const projetoIds = projetos?.map((p) => p.id) ?? [];
 
@@ -76,8 +87,9 @@ export default async function PortalPage({ params }: Props) {
           itens={itens ?? []}
           chamados={chamados ?? []}
           diagnostico={diagnostico ?? null}
-          propostaConteudo={(cliente.proposta_conteudo as Record<string, unknown>) ?? null}
-          propostaStatus={cliente.proposta_status ?? null}
+          propostaId={propostaAtiva?.id ?? null}
+          propostaConteudo={(propostaAtiva?.conteudo as Record<string, unknown>) ?? null}
+          propostaStatus={propostaAtiva?.status ?? null}
         />
       </div>
     </div>

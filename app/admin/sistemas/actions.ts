@@ -337,15 +337,47 @@ export async function marcarMensalidadePendente(mensalidadeId: string) {
   return { success: true };
 }
 
-// ── Proposta Rica (nível de cliente) ─────────────────────────────────────────
+// ── Propostas (tabela própria) ────────────────────────────────────────────────
 
+export async function criarProposta(clienteId: string) {
+  const { data, error } = await supabase
+    .from("propostas")
+    .insert({ cliente_id: clienteId, status: "nao_enviada" })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}`);
+  return { success: true, id: data.id };
+}
+
+export async function salvarProposta(propostaId: string, clienteId: string, conteudo: unknown) {
+  const { error } = await supabase.from("propostas").update({ conteudo }).eq("id", propostaId);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}`);
+  return { success: true };
+}
+
+export async function salvarPropostaStatus(propostaId: string, clienteId: string, status: string) {
+  const { error } = await supabase.from("propostas").update({ status }).eq("id", propostaId);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}`);
+  return { success: true };
+}
+
+export async function excluirProposta(propostaId: string, clienteId: string) {
+  const { error } = await supabase.from("propostas").delete().eq("id", propostaId);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}`);
+  return { success: true };
+}
+
+// kept for backward compat (old clientes.proposta_conteudo data)
 export async function salvarPropostaCliente(clienteId: string, conteudo: unknown) {
   const { error } = await supabase.from("clientes").update({ proposta_conteudo: conteudo }).eq("id", clienteId);
   if (error) return { error: error.message };
   revalidatePath(`/admin/sistemas/clientes/${clienteId}`);
   return { success: true };
 }
-
 export async function salvarPropostaStatusCliente(clienteId: string, status: string) {
   const { error } = await supabase.from("clientes").update({ proposta_status: status }).eq("id", clienteId);
   if (error) return { error: error.message };
@@ -353,32 +385,37 @@ export async function salvarPropostaStatusCliente(clienteId: string, status: str
   return { success: true };
 }
 
-export async function aceitarPropostaPortal(clienteId: string, planoEscolhido: "A" | "B") {
-  const { data: cliente } = await supabase
-    .from("clientes")
-    .select("proposta_conteudo, empresa")
-    .eq("id", clienteId)
-    .single();
-
+export async function aceitarPropostaPortal(clienteId: string, planoEscolhido: "A" | "B", propostaId?: string) {
+  if (propostaId) {
+    const { data: proposta } = await supabase.from("propostas").select("conteudo").eq("id", propostaId).single();
+    const conteudo = proposta?.conteudo as Record<string, unknown> | null;
+    const { error } = await supabase.from("propostas")
+      .update({ status: "aprovada", conteudo: { ...conteudo, plano_escolhido: planoEscolhido } })
+      .eq("id", propostaId);
+    if (error) return { error: error.message };
+    const { data: cliente } = await supabase.from("clientes").select("empresa").eq("id", clienteId).single();
+    const nomeSistema = (conteudo?.nome_sistema as string) || cliente?.empresa || "Novo Projeto";
+    await supabase.from("projetos").insert({ cliente_id: clienteId, nome: nomeSistema, status: "Aprovado" });
+    return { success: true };
+  }
+  // legacy: clientes.proposta_conteudo
+  const { data: cliente } = await supabase.from("clientes").select("proposta_conteudo, empresa").eq("id", clienteId).single();
   const conteudo = cliente?.proposta_conteudo as Record<string, unknown> | null;
-  const { error } = await supabase
-    .from("clientes")
+  const { error } = await supabase.from("clientes")
     .update({ proposta_status: "aprovada", proposta_conteudo: { ...conteudo, plano_escolhido: planoEscolhido } })
     .eq("id", clienteId);
   if (error) return { error: error.message };
-
   const nomeSistema = (conteudo?.nome_sistema as string) || cliente?.empresa || "Novo Projeto";
-
-  await supabase.from("projetos").insert({
-    cliente_id: clienteId,
-    nome: nomeSistema,
-    status: "Aprovado",
-  });
-
+  await supabase.from("projetos").insert({ cliente_id: clienteId, nome: nomeSistema, status: "Aprovado" });
   return { success: true };
 }
 
-export async function recusarPropostaPortal(clienteId: string) {
+export async function recusarPropostaPortal(clienteId: string, propostaId?: string) {
+  if (propostaId) {
+    const { error } = await supabase.from("propostas").update({ status: "recusada" }).eq("id", propostaId);
+    if (error) return { error: error.message };
+    return { success: true };
+  }
   const { error } = await supabase
     .from("clientes")
     .update({ proposta_status: "recusada" })

@@ -37,6 +37,7 @@ type Props = {
   itens: Item[];
   chamados: Chamado[];
   diagnostico: Diagnostico;
+  propostaId: string | null;
   propostaConteudo: PropostaConteudo | null;
   propostaStatus: string | null;
 };
@@ -126,8 +127,9 @@ function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: s
 type RespostaState = { error?: string; success?: boolean; acao?: "aprovar" | "recusar" };
 type PlanoInfo = { valor?: number; start?: number; mensalidade?: number; extra_info?: string; limite?: string };
 
-function RespostaProposta({ clienteId, planoA, planoB, planoRecomendado }: {
+function RespostaProposta({ clienteId, propostaId, planoA, planoB, planoRecomendado }: {
   clienteId: string;
+  propostaId: string | null;
   planoA: PlanoInfo | null;
   planoB: PlanoInfo | null;
   planoRecomendado: "A" | "B";
@@ -141,8 +143,8 @@ function RespostaProposta({ clienteId, planoA, planoB, planoRecomendado }: {
     async (_prev, fd) => {
       const acao = fd.get("acao") as "aprovar" | "recusar";
       const result = acao === "aprovar"
-        ? await aceitarPropostaPortal(clienteId, planoEscolhido)
-        : await recusarPropostaPortal(clienteId);
+        ? await aceitarPropostaPortal(clienteId, planoEscolhido, propostaId ?? undefined)
+        : await recusarPropostaPortal(clienteId, propostaId ?? undefined);
       if (result?.error) return { error: result.error };
       router.refresh();
       return { success: true, acao };
@@ -270,7 +272,7 @@ type Aba = "projeto" | "proposta" | "chamados";
 
 const APROVADOS = ["Aprovado", "Em desenvolvimento", "Entregue"];
 
-export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico, propostaConteudo, propostaStatus }: Props) {
+export function PortalContent({ cliente, projetos, etapas, itens, chamados, diagnostico, propostaId, propostaConteudo, propostaStatus }: Props) {
   const [projetoAtivo, setProjetoAtivo] = useState<string | null>(projetos[0]?.id ?? null);
   const projeto = projetos.find((p) => p.id === projetoAtivo) ?? null;
 
@@ -790,6 +792,7 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
             ) : (
               <RespostaProposta
                 clienteId={cliente.id}
+                propostaId={propostaId}
                 planoA={pa ? { valor: pa.valor, extra_info: pa.extra_info } : null}
                 planoB={pb ? { start: pb.start, mensalidade: pb.mensalidade, limite: pb.limite } : null}
                 planoRecomendado={(rec as "A" | "B") ?? "B"}

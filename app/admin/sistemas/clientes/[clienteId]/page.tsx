@@ -22,10 +22,11 @@ function ArrowLeftIcon() {
 export default async function ClientePerfilPage({ params }: Props) {
   const { clienteId } = await params;
 
-  const [{ data: cliente }, { data: projetos }, { data: diagnostico }] = await Promise.all([
-    supabase.from("clientes").select("*, proposta_conteudo, proposta_status").eq("id", clienteId).single(),
+  const [{ data: cliente }, { data: projetos }, { data: diagnostico }, { data: propostas }] = await Promise.all([
+    supabase.from("clientes").select("*").eq("id", clienteId).single(),
     supabase.from("projetos").select("*").eq("cliente_id", clienteId).order("created_at", { ascending: false }),
     supabase.from("diagnosticos").select("id, resolver_uma_coisa, orcamento, created_at, tempo_mercado, num_funcionarios, canais_venda, como_chegam_leads, quem_responde_leads, ferramentas_atuais, onde_retrabalho").eq("cliente_id", clienteId).maybeSingle(),
+    supabase.from("propostas").select("id, conteudo, status, created_at").eq("cliente_id", clienteId).order("created_at", { ascending: false }),
   ]);
 
   if (!cliente) notFound();
@@ -145,16 +146,14 @@ export default async function ClientePerfilPage({ params }: Props) {
         )}
       </div>
 
-      {/* Proposta */}
+      {/* Propostas */}
       <PropostaCliente
         clienteId={clienteId}
         empresaNome={cliente.empresa}
         clienteNome={cliente.nome}
         clienteContato={cliente.whatsapp ?? cliente.email ?? ""}
         segmento={cliente.segmento ?? ""}
-        propostaConteudo={cliente.proposta_conteudo ?? null}
-        propostaStatus={cliente.proposta_status ?? null}
-        diagnosticoContexto={null}
+        propostas={propostas ?? []}
       />
 
       {/* Projetos */}

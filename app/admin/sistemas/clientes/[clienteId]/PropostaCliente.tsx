@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { salvarPropostaCliente, salvarPropostaStatusCliente } from "@/app/admin/sistemas/actions";
+import { salvarProposta, salvarPropostaStatus, excluirProposta, criarProposta } from "@/app/admin/sistemas/actions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -402,20 +402,21 @@ const STATUS_OPTS = [
   { value: "recusada", label: "Recusada", color: "#F87171" },
 ];
 
-type Props = {
-  clienteId: string; empresaNome: string; clienteNome: string; clienteContato: string; segmento: string;
-  propostaConteudo: Record<string, unknown> | null;
-  propostaStatus: string | null;
-  diagnosticoContexto: null;
+type PropostaRow = { id: string; conteudo: Record<string, unknown> | null; status: string; created_at: string };
+
+type EditorProps = {
+  proposta: PropostaRow;
+  clienteId: string; clienteNome: string; empresaNome: string; segmento: string;
+  onDelete: () => void;
 };
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// ── Editor (single proposal) ──────────────────────────────────────────────────
 
-export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteContato, segmento, propostaConteudo, propostaStatus }: Props) {
+function PropostaEditor({ proposta, clienteId, clienteNome, empresaNome, segmento, onDelete }: EditorProps) {
   const [aberto, setAberto] = useState(false);
   const [form, setForm] = useState<FormProposta>(() => {
-    const base = formFromConteudo(propostaConteudo);
-    if (!propostaConteudo) return { ...base, ...ctxFromCliente(clienteNome) };
+    const base = formFromConteudo(proposta.conteudo);
+    if (!proposta.conteudo) return { ...base, ...ctxFromCliente(clienteNome) };
     const rows = base.contexto_rows.map((row) =>
       row.valor ? row : { ...row, valor: row.label === "Profissional" ? clienteNome : "" }
     );
@@ -424,7 +425,9 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
   const [modo, setModo] = useState<"editar" | "visualizar">("editar");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [localStatus, setLocalStatus] = useState(propostaStatus ?? "nao_enviada");
+  const [localStatus, setLocalStatus] = useState(proposta.status ?? "nao_enviada");
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
   const router = useRouter();
 
   function set<K extends keyof FormProposta>(field: K, value: FormProposta[K]) {
@@ -474,12 +477,19 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
 
   async function handleSave() {
     setSaving(true);
-    await salvarPropostaCliente(clienteId, buildConteudo(form));
-    await salvarPropostaStatusCliente(clienteId, localStatus);
+    await salvarProposta(proposta.id, clienteId, buildConteudo(form));
+    await salvarPropostaStatus(proposta.id, clienteId, localStatus);
     setSaving(false);
     setSaved(true);
     setModo("visualizar");
     setTimeout(() => setSaved(false), 2500);
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    setExcluindo(true);
+    await excluirProposta(proposta.id, clienteId);
+    onDelete();
     router.refresh();
   }
 
@@ -496,19 +506,21 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
     <button type="button" onClick={onClick} className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "rgba(46,155,175,0.1)", color: "#2E9BAF", border: "1px solid rgba(46,155,175,0.25)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>{label}</button>
   );
 
+  const nomeProposta = (form.nome_sistema || `Proposta ${new Date(proposta.created_at).toLocaleDateString("pt-BR")}`);
+
   return (
-    <div className="glass rounded-2xl mb-6">
+    <div className="glass rounded-2xl">
       {/* Header colapsável */}
-      <button type="button" onClick={() => setAberto((v) => !v)} className="w-full flex items-center justify-between p-5 text-left" style={{ cursor: "pointer", background: "transparent", border: "none" }}>
+      <button type="button" onClick={() => setAberto((v) => !v)} className="w-full flex items-center justify-between p-4 text-left" style={{ cursor: "pointer", background: "transparent", border: "none" }}>
         <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>Proposta Comercial</h2>
+          <p className="text-sm font-semibold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>{nomeProposta}</p>
           {statusAtual && (
-            <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: `${statusAtual.color}18`, color: statusAtual.color, border: `1px solid ${statusAtual.color}30`, fontFamily: "var(--font-inter), sans-serif" }}>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${statusAtual.color}18`, color: statusAtual.color, border: `1px solid ${statusAtual.color}30`, fontFamily: "var(--font-inter), sans-serif" }}>
               {statusAtual.label}
             </span>
           )}
         </div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: aberto ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: aberto ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
@@ -536,6 +548,20 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
               <button type="button" onClick={handleSave} disabled={saving} className="btn-primary" style={{ fontSize: "13px", padding: "9px 18px" }}>
                 {saving ? "Salvando..." : saved ? "Salvo!" : "Salvar"}
               </button>
+              {!confirmandoExcluir ? (
+                <button type="button" onClick={() => setConfirmandoExcluir(true)} className="text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(248,113,113,0.08)", color: "#F87171", border: "1px solid rgba(248,113,113,0.2)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+                  Excluir
+                </button>
+              ) : (
+                <>
+                  <button type="button" onClick={handleDelete} disabled={excluindo} className="text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(248,113,113,0.15)", color: "#F87171", border: "1px solid rgba(248,113,113,0.3)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+                    {excluindo ? "..." : "Confirmar"}
+                  </button>
+                  <button type="button" onClick={() => setConfirmandoExcluir(false)} className="text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.05)", color: "#9CA3AF", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+                    Cancelar
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -755,6 +781,65 @@ export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteCo
               </button>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── List wrapper (exported) ───────────────────────────────────────────────────
+
+type ListProps = {
+  clienteId: string; empresaNome: string; clienteNome: string; clienteContato: string; segmento: string;
+  propostas: PropostaRow[];
+};
+
+export function PropostaCliente({ clienteId, empresaNome, clienteNome, clienteContato, segmento, propostas: initial }: ListProps) {
+  const [propostas, setPropostas] = useState<PropostaRow[]>(initial);
+  const [criando, setCriando] = useState(false);
+  const router = useRouter();
+
+  async function handleNova() {
+    setCriando(true);
+    const res = await criarProposta(clienteId);
+    setCriando(false);
+    if (res?.id) {
+      setPropostas((prev) => [{ id: res.id, conteudo: null, status: "nao_enviada", created_at: new Date().toISOString() }, ...prev]);
+    }
+    router.refresh();
+  }
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+          Propostas {propostas.length > 0 ? `(${propostas.length})` : ""}
+        </h2>
+        <button type="button" onClick={handleNova} disabled={criando} className="btn-secondary" style={{ fontSize: "13px", padding: "8px 16px" }}>
+          {criando ? "Criando..." : "+ Nova Proposta"}
+        </button>
+      </div>
+
+      {propostas.length === 0 ? (
+        <div className="glass rounded-2xl p-8 text-center">
+          <p className="text-sm mb-4" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}>Nenhuma proposta criada ainda.</p>
+          <button type="button" onClick={handleNova} disabled={criando} className="btn-primary" style={{ fontSize: "13px" }}>
+            {criando ? "Criando..." : "+ Nova Proposta"}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {propostas.map((p) => (
+            <PropostaEditor
+              key={p.id}
+              proposta={p}
+              clienteId={clienteId}
+              clienteNome={clienteNome}
+              empresaNome={empresaNome}
+              segmento={segmento}
+              onDelete={() => setPropostas((prev) => prev.filter((x) => x.id !== p.id))}
+            />
+          ))}
         </div>
       )}
     </div>
