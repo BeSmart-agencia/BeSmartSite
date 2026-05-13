@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { excluirProjeto } from "@/app/admin/sistemas/actions";
 
 type Projeto = {
   id: string;
@@ -43,6 +46,16 @@ function money(v: number) {
 }
 
 export function ProjetoCard({ projeto: p, clienteId }: { projeto: Projeto; clienteId: string }) {
+  const [confirmando, setConfirmando] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  async function handleExcluir() {
+    setLoading(true);
+    await excluirProjeto(p.id, clienteId);
+    router.refresh();
+  }
+
   return (
     <div className="glass rounded-2xl p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -66,13 +79,47 @@ export function ProjetoCard({ projeto: p, clienteId }: { projeto: Projeto; clien
         {p.forma_pagamento && <span>{p.forma_pagamento}</span>}
       </div>
 
-      <Link
-        href={`/admin/sistemas/clientes/${clienteId}/projeto/${p.id}`}
-        className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-white"
-        style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}
-      >
-        Abrir projeto <ArrowRightIcon />
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          href={`/admin/sistemas/clientes/${clienteId}/projeto/${p.id}`}
+          className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-white"
+          style={{ color: "#9B6BB5", fontFamily: "var(--font-inter), sans-serif" }}
+        >
+          Abrir projeto <ArrowRightIcon />
+        </Link>
+
+        {!confirmando ? (
+          <button
+            type="button"
+            onClick={() => setConfirmando(true)}
+            className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={{ color: "#F87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.15)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}
+          >
+            Excluir
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Confirmar exclusão?</span>
+            <button
+              type="button"
+              onClick={handleExcluir}
+              disabled={loading}
+              className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ color: "#F87171", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.25)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}
+            >
+              {loading ? "..." : "Sim, excluir"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmando(false)}
+              className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ color: "#9CA3AF", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -387,6 +387,17 @@ export async function recusarPropostaPortal(clienteId: string) {
   return { success: true };
 }
 
+export async function excluirProjeto(projetoId: string, clienteId: string) {
+  await supabase.from("mensalidades").delete().eq("projeto_id", projetoId);
+  await supabase.from("parcelas").delete().eq("projeto_id", projetoId);
+  await supabase.from("etapas").delete().eq("projeto_id", projetoId);
+  await supabase.from("itens_escopo").delete().eq("projeto_id", projetoId);
+  const { error } = await supabase.from("projetos").delete().eq("id", projetoId);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/sistemas/clientes/${clienteId}`);
+  return { success: true };
+}
+
 export async function excluirCliente(clienteId: string) {
   await supabase.from("chamados").delete().eq("cliente_id", clienteId);
   await supabase.from("mensalidades").delete().in(
