@@ -551,7 +551,7 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
 
         const dores = (pc.dores as string[]) ?? [];
         const modulos = ((pc.modulos as Array<{ titulo: string; itens: string[] }>) ?? []).filter(m => m.titulo);
-        const comoFunciona = (pc.como_funciona as Array<{ passo: string; descricao: string }>) ?? [];
+        const comoFunciona = ((pc.como_funciona as Array<{ passo: string; descricao: string }>) ?? []).filter(s => s.descricao);
         const diferenciais = (pc.diferenciais as string[]) ?? [];
         const cronograma = ((pc.cronograma as Array<{ periodo: string; descricao: string }>) ?? []).filter(r => r.periodo);
         const condicoes = ((pc.condicoes_pagamento as Array<{ item: string; descricao: string }>) ?? []).filter(r => r.descricao);
