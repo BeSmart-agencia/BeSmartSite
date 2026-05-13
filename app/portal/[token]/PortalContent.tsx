@@ -551,7 +551,7 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
 
         const dores = (pc.dores as string[]) ?? [];
         const modulos = ((pc.modulos as Array<{ titulo: string; itens: string[] }>) ?? []).filter(m => m.titulo);
-        const comoFunciona = ((pc.como_funciona as Array<{ passo: string; descricao: string }>) ?? []).filter(s => s.descricao);
+        const comoFunciona = ((pc.como_funciona as Array<{ passo: string; descricao: string }>) ?? []).filter(s => s.passo);
         const diferenciais = (pc.diferenciais as string[]) ?? [];
         const cronograma = ((pc.cronograma as Array<{ periodo: string; descricao: string }>) ?? []).filter(r => r.periodo);
         const condicoes = ((pc.condicoes_pagamento as Array<{ item: string; descricao: string }>) ?? []).filter(r => r.descricao);
@@ -655,9 +655,12 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
                 <SectionBadge n="3" label="Como funciona na prática" color="#2E9BAF" />
                 <div className="flex flex-col gap-3">
                   {comoFunciona.map((s, i) => (
-                    <div key={i} className="flex gap-4 items-start rounded-xl p-4" style={{ background: "rgba(46,155,175,0.04)", border: "1px solid rgba(46,155,175,0.1)" }}>
-                      <span className="text-xs font-bold flex-shrink-0 px-2 py-1 rounded-lg" style={{ background: "rgba(46,155,175,0.15)", color: "#2E9BAF", fontFamily: F }}>{s.passo}</span>
-                      <p className="text-sm pt-0.5" style={{ color: "#D1D5DB", fontFamily: F }}>{s.descricao}</p>
+                    <div key={i} className="flex gap-3 items-start rounded-xl p-4" style={{ background: "rgba(46,155,175,0.05)", border: "1px solid rgba(46,155,175,0.12)" }}>
+                      <span className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: F }}>{i + 1}</span>
+                      <div className="flex flex-col gap-0.5 pt-0.5">
+                        <p className="text-sm font-semibold" style={{ color: "#fff", fontFamily: F }}>{s.passo}</p>
+                        {s.descricao && <p className="text-xs" style={{ color: "#9CA3AF", fontFamily: F }}>{s.descricao}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>
