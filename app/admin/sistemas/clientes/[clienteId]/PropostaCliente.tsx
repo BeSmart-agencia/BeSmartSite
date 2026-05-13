@@ -250,14 +250,14 @@ function PropostaPreview({ c, empresaNome, clienteNome }: { c: PropostaConteudo;
       )}
 
       {/* 3. Como funciona */}
-      {c.como_funciona.length > 0 && (
+      {c.como_funciona.filter(s => s.descricao).length > 0 && (
         <div className="glass rounded-2xl p-5">
           <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: F }}>3. Como funciona na prática</p>
           <div className="flex flex-col gap-3">
-            {c.como_funciona.map((s, i) => (
-              <div key={i} className="flex gap-4 items-start">
-                <div className="w-20 flex-shrink-0 text-xs font-bold pt-0.5" style={{ color: "#2E9BAF", fontFamily: F }}>{s.passo}</div>
-                <p className="text-sm flex-1" style={{ color: "#D1D5DB", fontFamily: F }}>{s.descricao}</p>
+            {c.como_funciona.filter(s => s.descricao).map((s, i) => (
+              <div key={i} className="flex gap-3 items-start rounded-xl p-3" style={{ background: "rgba(46,155,175,0.05)", border: "1px solid rgba(46,155,175,0.12)" }}>
+                <span className="text-xs font-bold flex-shrink-0 px-2 py-1 rounded-lg" style={{ background: "rgba(46,155,175,0.15)", color: "#2E9BAF", fontFamily: F }}>{s.passo}</span>
+                <p className="text-sm pt-0.5" style={{ color: "#D1D5DB", fontFamily: F }}>{s.descricao}</p>
               </div>
             ))}
           </div>
@@ -325,24 +325,26 @@ function PropostaPreview({ c, empresaNome, clienteNome }: { c: PropostaConteudo;
       )}
 
       {/* 6. Cronograma */}
-      {c.cronograma.length > 0 && (
+      {(c.cronograma.length > 0 || c.condicoes_pagamento.filter(r => r.descricao).length > 0) && (
         <div className="glass rounded-2xl p-5">
           <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#2E9BAF", fontFamily: F }}>6. Cronograma de Desenvolvimento</p>
-          <div className="flex flex-col gap-0 mb-5" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
-            {c.cronograma.map((row, i) => (
-              <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < c.cronograma.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
-                <span className="text-xs font-semibold flex-shrink-0 w-32" style={{ color: "#2E9BAF", fontFamily: F }}>{row.periodo}</span>
-                <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
-              </div>
-            ))}
-          </div>
-          {c.condicoes_pagamento.length > 0 && (
+          {c.cronograma.length > 0 && (
+            <div className="flex flex-col gap-0 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(46,155,175,0.15)", marginBottom: c.condicoes_pagamento.filter(r => r.descricao).length > 0 ? "16px" : "0" }}>
+              {c.cronograma.map((row, i) => (
+                <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < c.cronograma.length - 1 ? "1px solid rgba(46,155,175,0.08)" : "none", background: i % 2 === 0 ? "rgba(46,155,175,0.04)" : "transparent" }}>
+                  <span className="text-xs font-bold flex-shrink-0" style={{ color: "#2E9BAF", fontFamily: F, minWidth: "120px" }}>{row.periodo}</span>
+                  <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {c.condicoes_pagamento.filter(r => r.descricao).length > 0 && (
             <>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#2E9BAF", fontFamily: F }}>6.1 Condições de Pagamento (Plano B)</p>
-              <div className="flex flex-col gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", overflow: "hidden" }}>
-                {c.condicoes_pagamento.map((row, i) => (
-                  <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < c.condicoes_pagamento.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
-                    <span className="text-xs font-semibold flex-shrink-0 w-44" style={{ color: "#9CA3AF", fontFamily: F }}>{row.item}</span>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#2E9BAF", fontFamily: F }}>6.1 Condições de Pagamento</p>
+              <div className="flex flex-col gap-0 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(46,155,175,0.15)" }}>
+                {c.condicoes_pagamento.filter(r => r.descricao).map((row, i, arr) => (
+                  <div key={i} className="flex gap-3 px-4 py-2.5" style={{ borderBottom: i < arr.length - 1 ? "1px solid rgba(46,155,175,0.08)" : "none", background: i % 2 === 0 ? "rgba(46,155,175,0.04)" : "transparent" }}>
+                    <span className="text-xs font-semibold flex-shrink-0" style={{ color: "#9CA3AF", fontFamily: F, minWidth: "160px" }}>{row.item}</span>
                     <span className="text-xs" style={{ color: "#D1D5DB", fontFamily: F }}>{row.descricao}</span>
                   </div>
                 ))}

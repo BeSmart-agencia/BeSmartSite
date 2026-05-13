@@ -353,23 +353,21 @@ export async function salvarPropostaStatusCliente(clienteId: string, status: str
   return { success: true };
 }
 
-export async function aceitarPropostaPortal(clienteId: string) {
+export async function aceitarPropostaPortal(clienteId: string, planoEscolhido: "A" | "B") {
   const { data: cliente } = await supabase
     .from("clientes")
     .select("proposta_conteudo, empresa")
     .eq("id", clienteId)
     .single();
 
+  const conteudo = cliente?.proposta_conteudo as Record<string, unknown> | null;
   const { error } = await supabase
     .from("clientes")
-    .update({ proposta_status: "aprovada" })
+    .update({ proposta_status: "aprovada", proposta_conteudo: { ...conteudo, plano_escolhido: planoEscolhido } })
     .eq("id", clienteId);
   if (error) return { error: error.message };
 
-  const nomeSistema =
-    (cliente?.proposta_conteudo as { nome_sistema?: string } | null)?.nome_sistema ||
-    cliente?.empresa ||
-    "Novo Projeto";
+  const nomeSistema = (conteudo?.nome_sistema as string) || cliente?.empresa || "Novo Projeto";
 
   await supabase.from("projetos").insert({
     cliente_id: clienteId,

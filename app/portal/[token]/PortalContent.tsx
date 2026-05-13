@@ -124,16 +124,24 @@ function NovoChamado({ clienteId, projetoId }: { clienteId: string; projetoId: s
 // ── Resposta à proposta ───────────────────────────────────────────────────────
 
 type RespostaState = { error?: string; success?: boolean; acao?: "aprovar" | "recusar" };
+type PlanoInfo = { valor?: number; start?: number; mensalidade?: number; extra_info?: string; limite?: string };
 
-function RespostaProposta({ clienteId }: { clienteId: string }) {
+function RespostaProposta({ clienteId, planoA, planoB, planoRecomendado }: {
+  clienteId: string;
+  planoA: PlanoInfo | null;
+  planoB: PlanoInfo | null;
+  planoRecomendado: "A" | "B";
+}) {
+  const F = "var(--font-inter), sans-serif";
   const router = useRouter();
-  const [confirmando, setConfirmando] = useState<"aprovar" | "recusar" | null>(null);
+  const [etapa, setEtapa] = useState<"inicial" | "escolher_plano" | "confirmar" | "recusar">("inicial");
+  const [planoEscolhido, setPlanoEscolhido] = useState<"A" | "B">(planoRecomendado);
 
   const [state, formAction, pending] = useActionState<RespostaState, FormData>(
     async (_prev, fd) => {
       const acao = fd.get("acao") as "aprovar" | "recusar";
       const result = acao === "aprovar"
-        ? await aceitarPropostaPortal(clienteId)
+        ? await aceitarPropostaPortal(clienteId, planoEscolhido)
         : await recusarPropostaPortal(clienteId);
       if (result?.error) return { error: result.error };
       router.refresh();
@@ -144,34 +152,36 @@ function RespostaProposta({ clienteId }: { clienteId: string }) {
 
   if (state.success && state.acao === "aprovar") {
     return (
-      <div className="rounded-2xl p-6 text-center mt-4" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
+      <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         <p className="font-bold text-white mb-1" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>Proposta aceita!</p>
-        <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Entraremos em contato em breve para dar início ao projeto.</p>
+        <p className="text-sm mb-1" style={{ color: "#9CA3AF", fontFamily: F }}>Plano escolhido: <strong style={{ color: "#fff" }}>Plano {planoEscolhido}</strong></p>
+        <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: F }}>Entraremos em contato em breve para dar início ao projeto.</p>
       </div>
     );
   }
 
   if (state.success && state.acao === "recusar") {
     return (
-      <div className="rounded-2xl p-6 text-center mt-4" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
-        <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: "var(--font-inter), sans-serif" }}>Entendemos. Se mudar de ideia ou quiser conversar, estamos à disposição.</p>
+      <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
+        <p className="text-sm" style={{ color: "#9CA3AF", fontFamily: F }}>Entendemos. Se mudar de ideia ou quiser conversar, estamos à disposição.</p>
       </div>
     );
   }
 
-  if (confirmando === "recusar") {
+  // Etapa: confirmar recusa
+  if (etapa === "recusar") {
     return (
-      <div className="rounded-2xl p-5 mt-4 flex flex-col gap-3 text-center" style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)" }}>
-        <p className="text-sm font-semibold text-white" style={{ fontFamily: "var(--font-inter), sans-serif" }}>Tem certeza que deseja recusar esta proposta?</p>
+      <div className="rounded-2xl p-5 flex flex-col gap-3 text-center" style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)" }}>
+        <p className="text-sm font-semibold text-white" style={{ fontFamily: F }}>Tem certeza que deseja recusar esta proposta?</p>
         <div className="flex gap-3 justify-center">
           <form action={formAction}>
             <input type="hidden" name="acao" value="recusar" />
-            <button type="submit" disabled={pending} className="text-sm px-4 py-2 rounded-xl" style={{ background: "rgba(248,113,113,0.12)", color: "#F87171", border: "1px solid rgba(248,113,113,0.25)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+            <button type="submit" disabled={pending} className="text-sm px-4 py-2 rounded-xl" style={{ background: "rgba(248,113,113,0.12)", color: "#F87171", border: "1px solid rgba(248,113,113,0.25)", cursor: "pointer", fontFamily: F }}>
               Sim, recusar
             </button>
           </form>
-          <button type="button" onClick={() => setConfirmando(null)} className="text-sm px-4 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", color: "#9CA3AF", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif" }}>
+          <button type="button" onClick={() => setEtapa("inicial")} className="text-sm px-4 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", color: "#9CA3AF", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontFamily: F }}>
             Voltar
           </button>
         </div>
@@ -179,16 +189,75 @@ function RespostaProposta({ clienteId }: { clienteId: string }) {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-3 mt-6 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-      {state.error && <p className="text-xs text-center" style={{ color: "#F87171", fontFamily: "var(--font-inter), sans-serif" }}>{state.error}</p>}
-      <form action={formAction} className="flex flex-col gap-2">
-        <input type="hidden" name="acao" value="aprovar" />
-        <button type="submit" disabled={pending} className="btn-primary justify-center w-full" style={{ fontSize: "15px", padding: "14px", opacity: pending ? 0.7 : 1 }}>
-          {pending ? "Processando..." : "Aceitar proposta"}
+  // Etapa: escolher plano
+  if (etapa === "escolher_plano" || etapa === "confirmar") {
+    const temDoisPlanos = planoA && planoB;
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-semibold text-center text-white" style={{ fontFamily: F }}>
+          {temDoisPlanos ? "Escolha o seu plano" : "Confirmar aceite"}
+        </p>
+
+        {temDoisPlanos && (
+          <div className="grid grid-cols-2 gap-3">
+            {/* Plano A */}
+            <button type="button" onClick={() => { setPlanoEscolhido("A"); setEtapa("confirmar"); }}
+              className="rounded-xl p-4 text-left flex flex-col gap-1 transition-all"
+              style={{ background: planoEscolhido === "A" ? "rgba(155,107,181,0.15)" : "rgba(255,255,255,0.03)", border: planoEscolhido === "A" ? "2px solid rgba(155,107,181,0.5)" : "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold uppercase" style={{ color: "#9B6BB5", fontFamily: F }}>Plano A</span>
+                {planoRecomendado === "A" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(155,107,181,0.2)", color: "#9B6BB5", fontFamily: F }}>★</span>}
+              </div>
+              {planoA?.valor ? <p className="text-lg font-bold text-white" style={{ fontFamily: F }}>R$ {planoA.valor.toLocaleString("pt-BR")}</p> : null}
+              {planoA?.extra_info && <p className="text-xs" style={{ color: "#6B7280", fontFamily: F }}>{planoA.extra_info}</p>}
+              {planoEscolhido === "A" && <p className="text-xs font-semibold mt-1" style={{ color: "#9B6BB5", fontFamily: F }}>✓ Selecionado</p>}
+            </button>
+
+            {/* Plano B */}
+            <button type="button" onClick={() => { setPlanoEscolhido("B"); setEtapa("confirmar"); }}
+              className="rounded-xl p-4 text-left flex flex-col gap-1 transition-all"
+              style={{ background: planoEscolhido === "B" ? "rgba(46,155,175,0.12)" : "rgba(255,255,255,0.03)", border: planoEscolhido === "B" ? "2px solid rgba(46,155,175,0.5)" : "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold uppercase" style={{ color: "#2E9BAF", fontFamily: F }}>Plano B</span>
+                {planoRecomendado === "B" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(46,155,175,0.2)", color: "#2E9BAF", fontFamily: F }}>★</span>}
+              </div>
+              {(planoB?.start || planoB?.mensalidade) && (
+                <p className="text-sm font-bold text-white" style={{ fontFamily: F }}>
+                  R$ {(planoB.start ?? 0).toLocaleString("pt-BR")} + R$ {(planoB.mensalidade ?? 0).toLocaleString("pt-BR")}/mês
+                </p>
+              )}
+              {planoB?.limite && <p className="text-xs" style={{ color: "#6B7280", fontFamily: F }}>{planoB.limite}</p>}
+              {planoEscolhido === "B" && <p className="text-xs font-semibold mt-1" style={{ color: "#2E9BAF", fontFamily: F }}>✓ Selecionado</p>}
+            </button>
+          </div>
+        )}
+
+        {etapa === "confirmar" && (
+          <form action={formAction} className="flex flex-col gap-2">
+            <input type="hidden" name="acao" value="aprovar" />
+            <button type="submit" disabled={pending} className="btn-primary justify-center w-full" style={{ fontSize: "15px", padding: "14px", opacity: pending ? 0.7 : 1 }}>
+              {pending ? "Processando..." : `Confirmar — Plano ${planoEscolhido}`}
+            </button>
+          </form>
+        )}
+
+        {state.error && <p className="text-xs text-center" style={{ color: "#F87171", fontFamily: F }}>{state.error}</p>}
+
+        <button type="button" onClick={() => setEtapa("inicial")} className="text-xs text-center py-1" style={{ color: "#4B5563", fontFamily: F, background: "none", border: "none", cursor: "pointer" }}>
+          Voltar
         </button>
-      </form>
-      <button type="button" onClick={() => setConfirmando("recusar")} className="text-xs text-center py-2" style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif", background: "none", border: "none", cursor: "pointer" }}>
+      </div>
+    );
+  }
+
+  // Etapa inicial
+  return (
+    <div className="flex flex-col gap-3 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+      {state.error && <p className="text-xs text-center" style={{ color: "#F87171", fontFamily: F }}>{state.error}</p>}
+      <button type="button" onClick={() => setEtapa("escolher_plano")} className="btn-primary justify-center w-full" style={{ fontSize: "15px", padding: "14px" }}>
+        Aceitar proposta
+      </button>
+      <button type="button" onClick={() => setEtapa("recusar")} className="text-xs text-center py-2" style={{ color: "#4B5563", fontFamily: F, background: "none", border: "none", cursor: "pointer" }}>
         Recusar proposta
       </button>
     </div>
@@ -716,7 +785,12 @@ export function PortalContent({ cliente, projetos, etapas, itens, chamados, diag
                 <p className="text-sm" style={{ color: "#6B7280", fontFamily: F }}>Proposta recusada. Entre em contato se quiser conversar.</p>
               </div>
             ) : (
-              <RespostaProposta clienteId={cliente.id} />
+              <RespostaProposta
+                clienteId={cliente.id}
+                planoA={pa ? { valor: pa.valor, extra_info: pa.extra_info } : null}
+                planoB={pb ? { start: pb.start, mensalidade: pb.mensalidade, limite: pb.limite } : null}
+                planoRecomendado={(rec as "A" | "B") ?? "B"}
+              />
             )}
           </div>
         );
