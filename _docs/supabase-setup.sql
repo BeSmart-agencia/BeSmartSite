@@ -190,3 +190,30 @@ CREATE TABLE IF NOT EXISTS mensalidades (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE mensalidades DISABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- Linha de produto "Landing Pages" (link na bio)
+-- Produto independente da linha Sistemas Sob Medida — sem FK
+-- para clientes (que é acoplada ao fluxo de onboarding/projeto)
+-- ============================================================
+
+-- 9. Landing Pages
+CREATE TABLE IF NOT EXISTS landing_pages (
+  id                   UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  slug                 TEXT NOT NULL UNIQUE,
+  nome_cliente         TEXT NOT NULL,
+  empresa              TEXT,
+  whatsapp             TEXT,
+  email                TEXT,
+  plano                TEXT NOT NULL DEFAULT 'subdominio', -- 'subdominio' | 'dominio_proprio'
+  dominio_customizado  TEXT UNIQUE,
+  status               TEXT NOT NULL DEFAULT 'rascunho', -- rascunho | aguardando_pagamento | publicada
+  avatar_url           TEXT,
+  titulo               TEXT,
+  bio                  TEXT,
+  cor_tema             TEXT DEFAULT '#9B6BB5',
+  links                JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at           TIMESTAMPTZ DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE landing_pages DISABLE ROW LEVEL SECURITY;

@@ -652,6 +652,7 @@ export default function Home() {
                 {[
                   ["Social Media", "#gestao"],
                   ["Sistemas Sob Medida", "#produtos"],
+                  ["Landing Pages", "/landingpages"],
                   ["OrbitAI Creator (Em breve)", "#produtos"],
                   ["Falar no WhatsApp", WA_LINK],
                 ].map(([label, href]) => (

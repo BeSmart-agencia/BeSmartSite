@@ -14,6 +14,7 @@ function CalendarIcon() { return <svg width="15" height="15" viewBox="0 0 24 24"
 function TicketIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" /></svg>; }
 function BookIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>; }
 function LogOutIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>; }
+function SwitchIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>; }
 
 const GROUPS = [
   {
@@ -66,6 +67,14 @@ export function AdminSidebar() {
         <p className="mt-2 text-xs" style={{ color: "#374151", fontFamily: "var(--font-inter), sans-serif" }}>
           Sistemas Sob Medida
         </p>
+        <Link
+          href="/admin/landingpages"
+          className="mt-3 inline-flex items-center gap-1.5 text-xs transition-colors hover:text-white"
+          style={{ color: "#4B5563", fontFamily: "var(--font-inter), sans-serif" }}
+        >
+          <SwitchIcon />
+          Landing Pages
+        </Link>
       </div>
 
       <nav className="flex-1 p-3 overflow-y-auto flex flex-col gap-5">
